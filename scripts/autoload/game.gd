@@ -6,15 +6,18 @@ extends Node
 signal task_done(id: String)
 signal closet_opened(closet: Node)
 signal lights_changed
+signal phone_pressed ## speler drukt op T (telefoon)
 
 enum Phase { MENU, MORNING, SCHOOL, AFTERNOON, NIGHT }
 
-const LAST_DAY := 5
-## Tot en met deze dag is de game nu speelbaar. Daarna komt "einde demo".
-const PLAYABLE_UNTIL_DAY := 3
-const DAY_NAMES := ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+const LAST_DAY := 6
+## Tot en met deze dag is de game speelbaar.
+const PLAYABLE_UNTIL_DAY := 6
+const DAY_NAMES := ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
 ## De klok staat elke nacht later, alsof je steeds minder slaapt.
-const NIGHT_TIMES := ["00:13", "01:26", "02:39", "03:33", "03:33"]
+const NIGHT_TIMES := ["00:13", "01:26", "02:39", "03:33", "03:33", "03:33"]
+## Zoveel "Hulp" heb je nodig voor het goede einde.
+const HELP_FOR_GOOD_ENDING := 3
 
 var day := 1
 var phase := Phase.MENU
@@ -40,6 +43,7 @@ var school: Node = null
 ## Debug-menu: start bij deze fase na het herladen (-1 = normaal)
 var debug_start_phase := -1
 var debug_open := false
+var godmode := false ## debug: het wezen kan je niet pakken
 
 
 func reset() -> void:

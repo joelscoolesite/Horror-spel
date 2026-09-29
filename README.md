@@ -9,8 +9,7 @@ Maar elke nacht word je wakker met het gevoel dat er iets in je huis is. En elke
 
 ## Status
 
-**Speelbare demo:** dag 1 t/m 3 en nacht 1 t/m 3 (ongeveer 20–25 minuten).
-Nacht 4 en 5 en de eindes komen nog.
+**De hele game is speelbaar:** 6 dagen, 6 nachten en 3 eindes (ongeveer 45–60 minuten).
 
 ## Spelen op Windows
 
@@ -37,6 +36,7 @@ Nacht 4 en 5 en de eindes komen nog.
 | `Ctrl` | Bukken |
 | `Spatie` (in bed) | Onder de deken |
 | `1` `2` `3` | Keuzes maken |
+| `T` | Telefoon (mama appen/bellen, als het kan) |
 | `Esc` | Pauze (hier zit ook de muisgevoeligheid) |
 | `=` | **Debug-menu** |
 
@@ -44,7 +44,10 @@ Nacht 4 en 5 en de eindes komen nog.
 
 Hiermee kan je snel testen zonder alles opnieuw te spelen:
 
-- **Springen** naar dag 1, 2 of 3: ochtend, school, avond of nacht
+- **Springen**: kies een dag met `< Dag` / `Dag >`, en dan Ochtend, School, Avond of Nacht
+- **Godmode**: het wezen kan je niet pakken
+- **Het wezen: kom!**: laat het wezen vlak achter je verschijnen
+- **Lange gang**: de gang van nacht 4 aan/uit
 - **Spiegel traag**: zet de vertraging van je spiegelbeeld aan/uit
 - **Info** aan/uit: FPS, dag, fase, verborgen stats, positie, kamer, batterij
 - **Noclip** (door muren vliegen, Spatie = omhoog, Ctrl = omlaag) en **snel lopen**

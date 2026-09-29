@@ -28,6 +28,7 @@ func _init() -> void:
 		"hide": [_key(KEY_SPACE)],
 		"pause": [_key(KEY_ESCAPE)],
 		"debug": [_key(KEY_EQUAL)],
+		"phone": [_key(KEY_T)],
 		"choice_1": [_key(KEY_1)],
 		"choice_2": [_key(KEY_2)],
 		"choice_3": [_key(KEY_3)],

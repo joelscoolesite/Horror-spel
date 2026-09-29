@@ -162,6 +162,19 @@ func set_angle(a: float) -> void:
 	_apply()
 
 
+## Midden van de deur (in de wereld).
+func center() -> Vector3:
+	return _creak.global_position
+
+
+## Gaat langzaam een klein stukje open. Vanzelf. (nacht 4)
+func nudge(to_angle: float) -> void:
+	_target = -1.0
+	Sfx.play_at("creak_fast", center(), -14.0, 0.6)
+	var t := create_tween()
+	t.tween_method(set_angle, angle, to_angle, 1.8).set_trans(Tween.TRANS_SINE)
+
+
 ## Direct dicht zonder geluid (bijv. aan het begin van een nacht).
 func reset_closed() -> void:
 	_target = -1.0

@@ -18,6 +18,11 @@ func _ready() -> void:
 	_mat.shader = preload("res://shaders/post.gdshader")
 	rect.material = _mat
 	add_child(rect)
+	# beginwaardes expliciet zetten (anders kan je er niet vanaf "tweenen")
+	for p in ["distortion", "static_amount", "desaturate", "darkness"]:
+		set_param(p, 0.0)
+	set_param("vignette", 0.55)
+	set_param("grain", 0.035)
 
 
 func set_param(param: String, value: float) -> void:
@@ -27,7 +32,10 @@ func set_param(param: String, value: float) -> void:
 ## Laat een effect soepel veranderen, bijv. tween_param("distortion", 1.0, 0.5)
 func tween_param(param: String, value: float, seconds: float) -> Tween:
 	var t := create_tween()
-	t.tween_method(func(v): set_param(param, v), _mat.get_shader_parameter(param), value, seconds)
+	var from: Variant = _mat.get_shader_parameter(param)
+	if from == null:
+		from = 0.0
+	t.tween_method(func(v): set_param(param, v), float(from), value, seconds)
 	return t
 
 

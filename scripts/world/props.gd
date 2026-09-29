@@ -313,5 +313,5 @@ static func person(parent: Node3D, name: String, pos: Vector3, yaw: float, shirt
 		Build.box(head, Vector3(0.24, 0.18, 0.05) * s, Vector3(0, 0.1 * s, -0.1 * s), hair_m, false)
 		var eye_m := Build.mat("plastic_black")
 		for sx in [-1, 1]:
-			Build.box(head, Vector3(0.035, 0.025, 0.01) * s, Vector3(sx * 0.05 * s, 0.17 * s, 0.11 * s), eye_m, false)
+			Build.box(head, Vector3(0.035, 0.025, 0.01) * s, Vector3(sx * 0.05 * s, 0.17 * s, 0.11 * s), eye_m, false).set_meta("eye", true)
 	return g

@@ -37,6 +37,15 @@ var tv: TV
 var mirror: Mirror
 var lunchbox: MeshInstance3D
 var package: Node3D ## het pakketje van Amazin (nacht 3)
+var extension: Node3D ## de gang die langer is dan hij hoort (nacht 4)
+var copy_door: Door
+var sleeper_head: Node3D ## iemand in jouw bed... (nacht 4)
+var shadow: Node3D ## een zwarte gestalte die de regie overal kan neerzetten
+var strange_chair: Node3D ## een stoel die niet van jou is (dag 5+)
+var long_hall := false
+var stalker: Stalker ## het wezen (nacht 6)
+var _hall_end_wall: Array = []
+var _fridge_open: Node3D
 var clock_label: Label3D
 var env: Environment
 
@@ -58,6 +67,9 @@ func _ready() -> void:
 	_build_hall()
 	_build_living_room()
 	_build_kitchen()
+	stalker = Stalker.new()
+	stalker.name = "Stalker"
+	add_child(stalker)
 	Sfx.loop("room_tone", -14.0, "Ambience", self)
 	randomize()
 
@@ -162,12 +174,39 @@ func reset_for(night: bool) -> void:
 	tv.spot.deactivate()
 	for s in switches:
 		s.broken = false
+	set_long_hall(false)
+	set_fridge_open(false)
+	tv.set_message("")
+	shadow.visible = false
+	stalker.despawn()
+	sleeper_head.rotation = Vector3.ZERO
+	copy_door.reset_closed()
 	mirror.delay = 0.0
 	mirror.frozen = false
 	package.visible = false
 	lunchbox.visible = true
 	set_laptop_screen(false)
 	set_alarm(false)
+
+
+## Nacht 4: de gang loopt ineens verder, naar een deur die er nooit was.
+func set_long_hall(on: bool) -> void:
+	long_hall = on
+	extension.visible = on
+	for box in _hall_end_wall:
+		box.visible = not on
+		box.get_child(0).collision_layer = 0 if on else Build.LAYER_WORLD
+
+
+func set_fridge_open(on: bool) -> void:
+	_fridge_open.visible = on
+
+
+## Zet de schaduw-gestalte ergens neer, kijkend naar `look_at_pos`.
+func show_shadow(pos: Vector3, look_at_pos: Vector3) -> void:
+	shadow.global_position = pos
+	shadow.global_rotation.y = atan2(look_at_pos.x - pos.x, look_at_pos.z - pos.z)
+	shadow.visible = true
 
 
 func switch_for(room: String) -> LightSwitch:
@@ -226,7 +265,7 @@ func _build_shell() -> void:
 	_wall_z(0.0, 4.0, 5.5, _outside, m.hall)
 	_wall_z(0.0, 5.5, 10.5, _outside, m.living, [[7.0, 8.6, 0.9, 2.0]])
 	_wall_z(12.0, 0.0, 4.0, m.parent, _outside)
-	_wall_z(12.0, 4.0, 5.5, m.hall, _outside)
+	_hall_end_wall = _wall_z(12.0, 4.0, 5.5, m.hall, _outside)
 	_wall_z(12.0, 5.5, 10.5, m.kitchen, _outside, [[7.5, 8.8, 1.0, 2.0]])
 	# binnenmuren
 	_wall_x(4.0, 0.0, 4.5, m.bedroom, m.hall, [[3.3, 4.2, 0.0, 2.1]])
@@ -248,24 +287,86 @@ func _build_shell() -> void:
 	_window(Vector3(9.8, 1.45, 0.0), 0.0, Vector2(1.6, 1.1))
 	_window(Vector3(0.0, 1.45, 7.8), 90.0, Vector2(1.6, 1.1))
 	_window(Vector3(12.0, 1.5, 8.15), -90.0, Vector2(1.3, 1.0))
+	_build_extension()
 
 
 ## Muur langs de x-as (op diepte z). Kant a = noord (-z), kant b = zuid (+z).
-func _wall_x(z: float, x0: float, x1: float, mat_a: Material, mat_b: Material, openings := []) -> void:
+func _wall_x(z: float, x0: float, x1: float, mat_a: Material, mat_b: Material, openings := [], parent: Node3D = null) -> Array:
+	var boxes := []
 	for s in _segments(x0, x1, openings):
 		var size := Vector3(s[1] - s[0], s[3] - s[2], T * 0.5)
 		var cx: float = (s[0] + s[1]) * 0.5
-		Build.box(self, size, Vector3(cx, s[2], z - T * 0.25), mat_a)
-		Build.box(self, size, Vector3(cx, s[2], z + T * 0.25), mat_b)
+		boxes.append(Build.box(parent if parent else self, size, Vector3(cx, s[2], z - T * 0.25), mat_a))
+		boxes.append(Build.box(parent if parent else self, size, Vector3(cx, s[2], z + T * 0.25), mat_b))
+	return boxes
 
 
 ## Muur langs de z-as (op x). Kant a = west (-x), kant b = oost (+x).
-func _wall_z(x: float, z0: float, z1: float, mat_a: Material, mat_b: Material, openings := []) -> void:
+func _wall_z(x: float, z0: float, z1: float, mat_a: Material, mat_b: Material, openings := [], parent: Node3D = null) -> Array:
+	var boxes := []
 	for s in _segments(z0, z1, openings):
 		var size := Vector3(T * 0.5, s[3] - s[2], s[1] - s[0])
 		var cz: float = (s[0] + s[1]) * 0.5
-		Build.box(self, size, Vector3(x - T * 0.25, s[2], cz), mat_a)
-		Build.box(self, size, Vector3(x + T * 0.25, s[2], cz), mat_b)
+		boxes.append(Build.box(parent if parent else self, size, Vector3(x - T * 0.25, s[2], cz), mat_a))
+		boxes.append(Build.box(parent if parent else self, size, Vector3(x + T * 0.25, s[2], cz), mat_b))
+	return boxes
+
+
+## De gang die langer wordt (nacht 4), met aan het eind een kopie van jouw kamer.
+func _build_extension() -> void:
+	extension = Node3D.new()
+	extension.name = "Extension"
+	add_child(extension)
+	var w := Color.WHITE
+	var hall_m: Material = _wall_mats.hall
+	var room_m: Material = _wall_mats.bedroom
+	# gang: x 12 -> 19
+	var fl := Build.box(extension, Vector3(7.0, 1.0, 1.5), Vector3(15.5, -1.0, 4.75), Build.mat("wood_floor", w, 1.0, true), true)
+	fl.get_child(0).set_meta("surface", "wood")
+	Build.box(extension, Vector3(7.0, 0.1, 1.5), Vector3(15.5, H, 4.75), Build.mat("ceiling", w, 1.0, true), false)
+	_wall_x(4.0, 12.0, 19.0, _outside, hall_m, [], extension)
+	_wall_x(5.5, 12.0, 19.0, hall_m, _outside, [], extension)
+	# kopie-kamer: x 19 -> 23.5, z 2.5 -> 7
+	var cf := Build.box(extension, Vector3(4.5, 1.0, 4.5), Vector3(21.25, -1.0, 4.75), Build.mat("carpet", w, 1.0, true), true)
+	cf.get_child(0).set_meta("surface", "carpet")
+	Build.box(extension, Vector3(4.5, 0.1, 4.5), Vector3(21.25, H, 4.75), Build.mat("ceiling", w, 1.0, true), false)
+	_wall_z(19.0, 2.5, 7.0, hall_m, room_m, [[4.3, 5.2, 0.0, 2.1]], extension)
+	_wall_z(23.5, 2.5, 7.0, room_m, _outside, [], extension)
+	_wall_x(2.5, 19.0, 23.5, _outside, room_m, [], extension)
+	_wall_x(7.0, 19.0, 23.5, room_m, _outside, [], extension)
+	copy_door = Door.new()
+	copy_door.name = "CopyDoor"
+	copy_door.width = 0.86
+	copy_door.height = 2.08
+	copy_door.thickness = 0.05
+	copy_door.open_sign = 1.0
+	copy_door.max_angle = 95.0
+	copy_door.material = Build.mat("wood_white")
+	copy_door.position = Vector3(19.0, 0.0, 4.32)
+	copy_door.rotation_degrees.y = -90.0
+	extension.add_child(copy_door)
+	copy_door.build()
+	# precies jouw kamer... bijna
+	Props.bed(extension, "CopyBed", Vector3(22.5, 0, 2.575), 0.0, 1.0, 2.0)
+	Props.nightstand(extension, Vector3(21.7, 0, 2.955))
+	var clock := Build.label(extension, "03:33", Vector3(21.7, 0.56, 2.9), Color(1.0, 0.15, 0.1), 20)
+	clock.rotation_degrees.y = 0.0
+	var red := OmniLight3D.new()
+	red.position = Vector3(21.7, 0.8, 3.1)
+	red.omni_range = 2.5
+	red.light_energy = 0.5
+	red.light_color = Color(1.0, 0.2, 0.15)
+	extension.add_child(red)
+	Props.poster(extension, Vector3(23.42, 1.3, 4.5), -90.0)
+	# iemand ligt in het bed
+	var skin := Build.mat("plastic_white", Color(0.86, 0.66, 0.54))
+	Build.box(extension, Vector3(0.55, 0.22, 1.2), Vector3(22.5, 0.42, 3.75), Build.mat("blanket", w, 2.0), false)
+	sleeper_head = Build.group(extension, "SleeperHead", Vector3(22.5, 0.62, 2.95))
+	Build.box(sleeper_head, Vector3(0.22, 0.22, 0.24), Vector3(0, -0.11, 0), skin, false)
+	Build.box(sleeper_head, Vector3(0.24, 0.24, 0.08), Vector3(0, -0.12, -0.13), Build.mat("fabric_sheet", Color(0.25, 0.16, 0.1)), false)
+	for sx in [-1, 1]:
+		Build.box(sleeper_head, Vector3(0.035, 0.01, 0.025), Vector3(sx * 0.05, 0.11, 0.02), Build.mat("plastic_black"), false)
+	extension.visible = false
 
 
 ## Knipt een muur in stukken rond deuren en ramen.
@@ -295,6 +396,8 @@ func _room_door(room_name: String, x0: float, x1: float, z: float) -> void:
 	d.max_angle = 95.0
 	d.material = Build.mat("wood_white")
 	d.position = Vector3(x0 + 0.02, 0.0, z)
+	if room_name == "bedroom":
+		d.max_angle = 165.0 # kan helemaal plat tegen de muur
 	add_child(d)
 	d.build()
 	doors[room_name] = d
@@ -392,6 +495,13 @@ func _build_bedroom() -> void:
 	Build.box(self, Vector3(0.35, 0.3, 0.12), Vector3(0.3, 0.76, 3.35), Build.mat("fabric_couch", Color(0.6, 0.4, 0.9)), false)
 
 	_room_light("bedroom", Vector3(2.25, 0, 2.0), 5.0, Vector3(3.0, 1.2, 3.92), 180.0)
+	# een stoel in de hoek, gericht op je bed. Die is niet van jou. (dag 5+)
+	strange_chair = Props.chair(self, Vector3(3.7, 0, 3.2), -135.0, Build.mat("wood_dark"))
+	strange_chair.visible = false
+	# de schaduw-gestalte (hergebruikt in nacht 4 en 5)
+	shadow = Props.person(self, "Shadow", Vector3.ZERO, 0.0, Color(0.01, 0.01, 0.01), false, true, Color.BLACK, Color(0.01, 0.01, 0.01))
+	shadow.scale = Vector3(1.0, 1.08, 1.0)
+	shadow.visible = false
 	_marker("bed_head", Vector3(0.65, 0.62, 0.42), Vector3(0.65, 0.9, 3.0))
 	_marker("bed_side", Vector3(1.6, 0, 1.4), Vector3(3.5, 0, 4.0))
 
@@ -428,6 +538,7 @@ func _build_hall() -> void:
 	Build.box(self, Vector3(1.0, 0.04, 0.08), Vector3(9.3, 1.7, 5.4), Build.mat("wood_dark"), false)
 	Build.box(self, Vector3(0.4, 0.9, 0.1), Vector3(9.0, 0.85, 5.33), Build.mat("fabric_couch", Color(0.6, 0.6, 0.7)), false)
 	_room_light("hall", Vector3(6.0, 0, 4.75), 7.0, Vector3(2.9, 1.2, 4.08), 0.0)
+	_marker("hall_east", Vector3(10.8, 0, 4.75), Vector3(0, 0, 4.75))
 
 
 func _build_living_room() -> void:
@@ -479,6 +590,16 @@ func _build_kitchen() -> void:
 	Props.stove(self, Vector3(11.2, 0, 9.825), 180.0)
 	Props.sink(self, Vector3(10.2, 0, 9.825), 180.0)
 	var fridge := Props.fridge(self, Vector3(7.51, 0, 9.8), 180.0)
+	# open koelkastdeur + licht (nacht 5)
+	_fridge_open = Build.group(self, "FridgeOpen", Vector3(7.2, 0, 9.78))
+	Build.box(_fridge_open, Vector3(0.05, 1.75, 0.6), Vector3(0, 0.03, -0.3), Build.mat("plastic_white"), false)
+	var cold := OmniLight3D.new()
+	cold.position = Vector3(0.3, 1.1, -0.35)
+	cold.omni_range = 3.5
+	cold.light_energy = 1.3
+	cold.light_color = Color(0.85, 0.95, 1.0)
+	_fridge_open.add_child(cold)
+	_fridge_open.visible = false
 	Sfx.loop_at("fridge_hum", fridge, -8.0).position = Vector3(0, 0.3, -0.3)
 	closets.append(Props.closet(self, "Closet_Pantry", Vector3(11.325, 0, 6.4), -90.0, 0.8, 2.0, 0.6, Build.mat("wood_white"), false))
 	Props.table(self, Vector3(9.3, 0, 7.9), 1.0, 0.7)

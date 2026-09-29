@@ -30,22 +30,27 @@ func _ready() -> void:
 
 func _run() -> void:
 	var start_phase := _read_start_args()
+	var ending := ""
 	while Game.day <= Game.PLAYABLE_UNTIL_DAY:
-		if start_phase <= 0:
-			await day_director.run_morning(Game.day)
-		if start_phase <= 1:
-			await day_director.run_school(Game.day)
-		if start_phase <= 2:
-			await day_director.run_afternoon(Game.day)
-		await night_director.run_night(Game.day)
+		if Game.day >= 6:
+			# zaterdag: geen school
+			if start_phase <= 2:
+				await day_director.run_saturday()
+		else:
+			if start_phase <= 0:
+				await day_director.run_morning(Game.day)
+			if start_phase <= 1:
+				await day_director.run_school(Game.day)
+			if start_phase <= 2:
+				await day_director.run_afternoon(Game.day)
+		ending = await night_director.run_night(Game.day)
 		start_phase = 0
+		if ending != "":
+			break
 		Game.day += 1
+	await night_director.play_ending(ending)
 	Game.player.locked = true
-	await Game.hud.title_card([
-		"End of the demo.",
-		"Nights 4 and 5 are coming...",
-		"Thanks for playing.",
-	])
+	await Game.hud.title_card(["SOMETHING'S INSIDE", "Thanks for playing."], 2.5)
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
 

@@ -132,6 +132,70 @@ func run() -> void:
 	player._pitch = 0.1
 	await _settle()
 	_shot("school_dream")
+	# nacht 4: de lange gang en de kopie-kamer
+	ap.set_mood("night")
+	Game.post.set_night(true)
+	Game.phase = Game.Phase.NIGHT
+	ap.set_long_hall(true)
+	player.set_flashlight(true)
+	_look(player, Vector3(9.0, 0, 4.75), Vector3(19.0, 1.0, 4.75))
+	await _settle()
+	_shot("n4_long_hall")
+	ap.copy_door.set_angle(90.0)
+	_look(player, Vector3(20.2, 0, 4.7), Vector3(22.5, 0.5, 3.0))
+	await _settle()
+	_shot("n4_copy_room")
+	ap.set_long_hall(false)
+	# nacht 4: iets in de deuropening
+	player.lie_in_bed(ap.markers.bed_head, ap.markers.bed_side)
+	ap.doors.bedroom.set_angle(165.0)
+	ap.show_shadow(Vector3(3.75, 0, 4.15), ap.markers.bed_head.global_position)
+	var bl := OmniLight3D.new()
+	bl.omni_range = 4.5
+	bl.light_energy = 1.6
+	bl.light_color = Color(0.5, 0.55, 0.8)
+	ap.add_child(bl)
+	bl.global_position = Vector3(3.5, 1.4, 6.1)
+	player._yaw = 0.72
+	player._pitch = 0.1
+	await _settle()
+	_shot("n4_doorway")
+	ap.shadow.visible = false
+	bl.queue_free()
+	# nacht 5: koelkast open, TV-tekst
+	ap.set_fridge_open(true)
+	ap.tv.set_mode(TV.Mode.STATIC)
+	ap.tv.set_message("LOOK\nBEHIND\nYOU")
+	_look(player, Vector3(5.5, 0, 7.6), Vector3(4.6, 0.8, 10.0))
+	await _settle()
+	_shot("n5_tv")
+	_look(player, Vector3(9.5, 0, 7.0), Vector3(7.5, 1.0, 9.8))
+	await _settle()
+	_shot("n5_fridge")
+	ap.set_fridge_open(false)
+	ap.tv.set_mode(TV.Mode.OFF)
+	ap.tv.set_message("")
+	# nacht 6: het wezen in de gang
+	ap.stalker.spawn("hall_par")
+	ap.stalker.active = false
+	player.set_flashlight(true)
+	_look(player, Vector3(3.0, 0, 4.75), Vector3(7.85, 1.3, 4.75))
+	await _settle()
+	_shot("n6_stalker")
+	ap.stalker.despawn()
+	# school dag 4: geen ogen
+	ap.set_mood("school")
+	Game.post.set_night(false)
+	player.set_flashlight(false)
+	sc.set_empty(false)
+	sc.reset_figure()
+	sc.set_eyes(false)
+	sc.everyone_look_at(player.global_position)
+	player.sit_at(sc.seat_marker)
+	player._yaw = -0.3
+	player._pitch = -0.1
+	await _settle()
+	_shot("school_noeyes")
 	print("TOUR KLAAR")
 	get_tree().quit()
 

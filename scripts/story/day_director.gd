@@ -46,6 +46,12 @@ func run_morning(day: int) -> void:
 	elif day == 3:
 		ap.lunchbox.visible = false # je broodtrommel is weg... (zie nacht 3)
 		hud.say("My phone is almost dead. I forgot to charge it. Again.", 3.5)
+	elif day == 4:
+		_clock_glitch()
+	elif day >= 5:
+		ap.strange_chair.visible = true
+		await Game.wait(1.5)
+		hud.say("There's a chair in the corner of your room.\nYou don't own that chair.", 4.5)
 
 	var on_task := _on_morning_task.bind(day)
 	Game.task_done.connect(on_task)
@@ -65,6 +71,23 @@ func run_morning(day: int) -> void:
 	Sfx.play("door_close", -4.0)
 	await hud.fade_out(1.0)
 	hud.clear_objectives()
+
+
+## Dag 4: de wekker zegt heel even iets anders...
+func _clock_glitch() -> void:
+	await Game.wait(4.0)
+	ap.set_clock("03:33")
+	await Game.wait(0.4)
+	ap.set_clock("07:00")
+	await Game.wait(1.0)
+	hud.say("Did the clock just say 03:33?", 3.0)
+
+
+## Zaterdag: geen school. Je bent de hele dag thuis. Alleen.
+func run_saturday() -> void:
+	player.locked = true
+	await hud.title_card([Game.DAY_NAMES[5], "No school today.", "The whole day at home. Alone."], 2.5)
+	await run_afternoon(6)
 
 
 func _on_morning_task(id: String, day: int) -> void:
@@ -87,12 +110,17 @@ func _on_morning_task(id: String, day: int) -> void:
 					hud.say("Don't forget your lunch.", 3.0)
 			elif day == 2:
 				hud.say("The bread is almost gone. Nobody bought new bread.", 3.5)
-			else:
+			elif day == 3:
 				hud.say("There's no bread left. You eat a dry cracker.", 3.5)
+			else:
+				hud.say("There's nothing left to eat. Nothing at all.", 3.5)
 		"lunch":
 			ap.spots.lunch.deactivate()
-			if day >= 3:
+			if day == 3:
 				hud.say("Your lunchbox is gone. You always leave it here...", 3.5)
+				return
+			if day >= 4:
+				hud.say("Your lunchbox is back. You don't want to open it.", 3.5)
 				return
 			_lunch = true
 			Sfx.play("pickup", -6.0, 0.8)
@@ -108,6 +136,16 @@ var school: School:
 
 func run_school(day: int) -> void:
 	Game.phase = Game.Phase.SCHOOL
+	if day == 5:
+		# je weet niet eens meer dat je naar school ging
+		player.locked = true
+		await hud.title_card([
+			"School.",
+			"You don't remember getting there.",
+			"Someone says your name. You don't answer.",
+			"The bell rings. It's already over.",
+		], 2.8)
+		return
 	ap.set_mood("school")
 	Game.post.set_night(false)
 	player.night_mode = false
@@ -121,6 +159,7 @@ func run_school(day: int) -> void:
 	school.teacher.rotation.y = 0.0
 	school.reset_figure()
 	school.set_empty(false)
+	school.set_eyes(true)
 	school.everyone_look_at(null)
 
 	var murmur: AudioStreamPlayer = Sfx.loop("murmur", -16.0, "Ambience", self)
@@ -136,6 +175,8 @@ func run_school(day: int) -> void:
 			await _school_day_2(murmur)
 		3:
 			await _school_day_3(murmur)
+		4:
+			await _school_day_4()
 		_:
 			await Game.wait(3.0)
 
@@ -217,6 +258,22 @@ func _school_day_3(murmur: AudioStreamPlayer) -> void:
 		else:
 			await hud.say_wait("You leave before the teacher can say anything.", 3.0)
 	school.teacher.rotation.y = 0.0
+
+
+func _school_day_4() -> void:
+	await _teacher("\"Today we're going to talk about...\"", 2.5)
+	await Game.wait(1.0)
+	school.set_eyes(false) # niemand heeft nog ogen
+	await _teacher("\"...you ...sleep ...home ...alone ...closets...\"", 3.5)
+	player.fear = 0.5
+	hud.say("Their faces... something is wrong with their faces.", 4.0)
+	await Game.wait(5.0)
+	await hud.fade_out(0.12)
+	school.set_eyes(true)
+	await hud.fade_in(0.12)
+	player.fear = 0.0
+	await hud.say_wait("You blink. Everything is normal.", 2.5)
+	await _teacher("\"...and that's why sleep is so important. Any questions?\"", 3.5)
 
 
 func _teacher(text: String, seconds := 3.0) -> void:
@@ -303,23 +360,31 @@ func run_afternoon(day: int) -> void:
 	ap.reset_for(false)
 	ap.set_mood("evening")
 	ap.set_clock("20:41")
-	player.place_at(ap.markers.front_door_in)
+	ap.strange_chair.visible = day >= 5
+	player.place_at(ap.markers.bed_side if day >= 6 else ap.markers.front_door_in)
 	player.locked = false
 	await hud.fade_in(1.2)
-	if day >= 3:
-		hud.say("Home. Nobody's here. And the package never came.", 3.5)
-	else:
-		hud.say("Home. Nobody's here. As usual.", 3.0)
-	hud.set_objectives([
-		["game", "Play a game"],
-		["order", "Order something online"],
-		["news", "Check the news"],
-		["lights", "Turn off all the lights"],
-		["bed", "Go to bed"],
-	])
+	match day:
+		1, 2:
+			hud.say("Home. Nobody's here. As usual.", 3.0)
+		3:
+			hud.say("Home. Nobody's here. And the package never came.", 3.5)
+		4:
+			hud.say("Home. Your lunchbox is on the counter. You don't touch it.", 3.5)
+		5:
+			hud.say("Home. The door was unlocked. You're sure you locked it this morning.", 4.0)
+		_:
+			hud.say("The day goes by. It's already dark outside.", 3.5)
+	var objectives := [["game", "Play a game"]]
+	if day <= 5:
+		objectives.append(["order", "Order something online"])
+		ap.spots.laptop.activate("Order something")
+	objectives.append(["news", "Check the news" if day <= 3 else "Check your phone"])
+	objectives.append(["lights", "Turn off all the lights"])
+	objectives.append(["bed", "Go to bed"])
+	hud.set_objectives(objectives)
 	ap.spots.tv.activate("Play a game")
-	ap.spots.laptop.activate("Order something")
-	ap.spots.phone.activate("Check the news")
+	ap.spots.phone.activate("Check the news" if day <= 3 else "Check your phone")
 	ap.spots.bed.activate("Go to bed")
 	Game.lights_changed.connect(_on_lights_changed)
 	var on_task := _on_afternoon_task.bind(day)
@@ -355,13 +420,20 @@ func _on_afternoon_task(id: String, day: int) -> void:
 		"tv":
 			_busy = true
 			ap.spots.tv.deactivate()
-			ap.tv.set_mode(TV.Mode.GAME)
+			ap.tv.set_mode(TV.Mode.STATIC if day == 5 else TV.Mode.GAME)
 			player.locked = true
-			if day >= 3:
-				await hud.say_wait("In the game, your character keeps opening doors. Closets. One after another.", 3.5)
-				await hud.say_wait("You don't remember this level.", 2.5)
-			else:
-				await hud.say_wait("You play for a while.", 3.0)
+			match day:
+				1, 2:
+					await hud.say_wait("You play for a while.", 3.0)
+				3:
+					await hud.say_wait("In the game, your character keeps opening doors. Closets. One after another.", 3.5)
+					await hud.say_wait("You don't remember this level.", 2.5)
+				4:
+					await hud.say_wait("In the game, your character walks down a hallway. It never ends.", 3.5)
+				5:
+					await hud.say_wait("The game won't start. Just static.", 3.0)
+				_:
+					await hud.say_wait("You play. You don't really see the screen.", 3.0)
 			var pick: int = await hud.choose("It's getting late...", ["\"Just one more round.\"", "\"No, that's enough.\""])
 			if pick == 0:
 				Game.exhaustion += 1
@@ -382,6 +454,12 @@ func _on_afternoon_task(id: String, day: int) -> void:
 			var question := "AMAZIN  -  Recommended for you"
 			if day == 1:
 				items = ["Wireless headphones", "A night light", "Comic book: 'Deep Space Kid'"]
+			elif day == 4:
+				question = "AMAZIN  -  Your cart:\n\n'Something Is Inside My House' (book)\nYou didn't add this."
+				items = ["Remove it", "Order it anyway"]
+			elif day >= 5:
+				question = "AMAZIN  -  Order status:\n\nDELIVERED.\nDelivered to: your bedroom closet."
+				items = ["Close the laptop"]
 			elif day >= 3:
 				question += "\n\nYesterday's order says: DELIVERED.\nYou never got anything."
 				items = ["Batteries", "A night light", "A lock for your bedroom door"]
@@ -389,20 +467,87 @@ func _on_afternoon_task(id: String, day: int) -> void:
 				question += "\n\nThere is already something in your cart:\na door lock. You don't remember adding it."
 				items = ["The door lock", "A night light", "A sleeping mask"]
 			var pick: int = await hud.choose(question, items)
-			Game.orders.append(items[pick])
 			ap.set_laptop_screen(false)
-			hud.say("Order placed. Delivery: tomorrow.", 2.5)
+			if day == 4 and pick == 0:
+				hud.say("You remove it. When you look again, it's back in your cart.", 3.5)
+			elif day >= 5:
+				hud.say("You close the laptop. Fast.", 2.5)
+			else:
+				if day == 4:
+					Game.exhaustion += 1
+				Game.orders.append(items[pick])
+				hud.say("Order placed. Delivery: tomorrow.", 2.5)
 			hud.complete_objective("order")
 			_busy = false
 		"phone":
 			_busy = true
 			ap.spots.phone.deactivate()
-			await _read_news(day)
+			if day <= 3:
+				await _read_news(day)
+			else:
+				await _phone_menu(day)
 			hud.complete_objective("news")
 			_busy = false
 
 
+## Dag 4+: je telefoon. Nieuws lezen, of... mama appen.
+func _phone_menu(day: int) -> void:
+	var options := ["Read the news", "Text Mom"]
+	if day == 5 and Game.flags.get("talked_after_class", false):
+		options.append("Call the school counselor")
+	options.append("Put it away")
+	var pick: int = await hud.choose("Your phone.  3% battery.", options)
+	match options[pick]:
+		"Read the news":
+			await _read_news(day)
+		"Text Mom":
+			await _text_mom(day)
+		"Call the school counselor":
+			Game.help += 1
+			Game.flags["called_counselor"] = true
+			await hud.show_page("Voicemail: \"Hi, you've reached the school counselor. Leave a message and I'll call you back on Monday.\"\n\nYou leave a message. Your voice shakes.\nBut it feels a little better.")
+
+
+func _text_mom(day: int) -> void:
+	var pick: int = await hud.choose("Text Mom:", [
+		"\"When are you coming home?\"",
+		"\"I can't sleep. I think something is really wrong.\"",
+		"(don't send anything)",
+	])
+	if pick == 2:
+		return
+	if pick == 1:
+		Game.help += 1
+		Game.flags["texted_mom_%d" % day] = true
+	await hud.say_wait("Delivered.", 1.5)
+	await Game.wait(1.5)
+	var reply := "\"Working late again, sorry sweetie. Try to get some sleep.\""
+	if pick == 1:
+		match day:
+			4:
+				reply = "\"Oh no. Are you okay? I'm on night shift, but call me if you need me.\""
+			5:
+				reply = "\"I'm worried about you. We'll talk this weekend, okay? Keep your phone close.\""
+			_:
+				if Game.help >= Game.HELP_FOR_GOOD_ENDING:
+					reply = "\"I'm coming home early tomorrow. Tonight, if anything happens: CALL me. Promise?\""
+				else:
+					reply = "\"Late shift again tonight. Sorry. Tomorrow, okay?\""
+	Sfx.play("ui_click", -4.0, 0.7)
+	await hud.show_page("Mom:\n\n" + reply)
+
+
 func _read_news(day: int) -> void:
+	if day == 4:
+		Game.exhaustion += 1
+		await hud.show_page("NEWS\n\n'Neighbours worried about kid on the 3rd floor'\n\n\"We hear footsteps at night. Every night. Doors opening and closing. The kid lives alone with their mother, who works night shifts.\"")
+		return
+	if day == 5:
+		await hud.show_page("NEWS\n\n\n\n(The page is empty.)")
+		return
+	if day >= 6:
+		await hud.show_page("NEWS\n\nNo new articles.")
+		return
 	if day == 1:
 		await hud.show_page("NEWS\n\n- Local bakery wins prize for best 'tompouce'\n- Storm expected this weekend\n- New game console sold out in two hours")
 		return

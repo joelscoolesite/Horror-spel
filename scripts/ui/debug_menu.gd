@@ -9,6 +9,8 @@ var _panel: ColorRect
 var _info: Label
 var _show_info := false
 var _locked_player := false
+var _day_label: Label
+var _picked_day := 1
 
 
 func _ready() -> void:
@@ -54,11 +56,10 @@ func _ready() -> void:
 	_panel.add_child(grid)
 
 	var buttons := [
-		["D1 ochtend", _jump.bind(1, 0)], ["D1 school", _jump.bind(1, 1)], ["D1 avond", _jump.bind(1, 2)],
-		["D1 nacht", _jump.bind(1, 3)], ["D2 ochtend", _jump.bind(2, 0)], ["D2 school", _jump.bind(2, 1)],
-		["D2 avond", _jump.bind(2, 2)], ["D2 nacht", _jump.bind(2, 3)], ["D3 ochtend", _jump.bind(3, 0)],
-		["D3 school", _jump.bind(3, 1)], ["D3 avond", _jump.bind(3, 2)], ["D3 nacht", _jump.bind(3, 3)],
-		["Spiegel traag", _mirror_delay], ["Info aan/uit", _toggle_info],
+		["< Dag", _pick_day.bind(-1)], ["", Callable()], ["Dag >", _pick_day.bind(1)],
+		["Ochtend", _jump_phase.bind(0)], ["School", _jump_phase.bind(1)], ["Avond", _jump_phase.bind(2)],
+		["Nacht", _jump_phase.bind(3)], ["Godmode", _toggle_god], ["Het wezen: kom!", _summon],
+		["Lange gang", _long_hall], ["Spiegel traag", _mirror_delay], ["Info aan/uit", _toggle_info],
 		["Noclip (vliegen)", _toggle_noclip], ["Snel lopen", _toggle_fast], ["Batterij vol", _full_battery],
 		["Lichten aan", _lights.bind(true)], ["Lichten uit", _lights.bind(false)], ["Kasten open", _closets.bind(true)],
 		["Kasten dicht", _closets.bind(false)], ["TV ruis", _tv.bind(TV.Mode.STATIC)], ["TV uit", _tv.bind(TV.Mode.OFF)],
@@ -67,6 +68,12 @@ func _ready() -> void:
 		["Hulp -1", _stat.bind("help", -1)], ["Nacht-sfeer", _mood.bind("night")], ["Dag-sfeer", _mood.bind("morning")],
 	]
 	for b in buttons:
+		if b[0] == "":
+			_day_label = Label.new()
+			_day_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_day_label.custom_minimum_size = Vector2(100, 15)
+			grid.add_child(_day_label)
+			continue
 		var btn := Button.new()
 		btn.text = b[0]
 		btn.custom_minimum_size = Vector2(100, 15)
@@ -83,6 +90,9 @@ func _input(event: InputEvent) -> void:
 
 func _set_open(open: bool) -> void:
 	_panel.visible = open
+	if open:
+		_picked_day = Game.day
+		_pick_day(0)
 	Game.debug_open = open
 	_info.visible = open or _show_info
 	var player: Player = Game.player
@@ -116,10 +126,36 @@ func _process(_delta: float) -> void:
 		lines.append("Batterij %d%%  Angst %.1f" % [p.battery * 100.0, p.fear])
 		if p.noclip:
 			lines.append("NOCLIP")
+		if Game.godmode:
+			lines.append("GODMODE")
 	_info.text = "\n".join(lines)
 
 
 # ------------------------------------------------------------------ acties
+
+func _pick_day(step: int) -> void:
+	_picked_day = clampi(_picked_day + step, 1, Game.LAST_DAY)
+	_day_label.text = "Dag %d (%s)" % [_picked_day, Game.DAY_NAMES[_picked_day - 1].capitalize()]
+
+
+func _jump_phase(phase: int) -> void:
+	if _picked_day >= 6 and phase < 2:
+		phase = 2 # zaterdag: geen ochtend/school
+	_jump(_picked_day, phase)
+
+
+func _toggle_god() -> void:
+	Game.godmode = not Game.godmode
+
+
+func _summon() -> void:
+	var s: Stalker = Game.apartment.stalker
+	s.spawn(s._nearest_node(Game.player.global_position + Game.player.global_basis.z * 3.0))
+
+
+func _long_hall() -> void:
+	Game.apartment.set_long_hall(not Game.apartment.long_hall)
+
 
 func _jump(day: int, phase: int) -> void:
 	Game.day = day

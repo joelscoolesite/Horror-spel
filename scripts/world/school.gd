@@ -176,6 +176,14 @@ func set_empty(empty: bool) -> void:
 	board_label.visible = not empty
 
 
+## Ogen aan/uit bij iedereen in de klas (dag 4: niemand heeft ogen...)
+func set_eyes(on: bool) -> void:
+	for p in kids + [teacher]:
+		for n in p.get_node("Head").get_children():
+			if n.has_meta("eye"):
+				n.visible = on
+
+
 ## Iedereen draait zijn hoofd naar dit punt (of terug naar voren).
 func everyone_look_at(point: Variant) -> void:
 	for k in kids:

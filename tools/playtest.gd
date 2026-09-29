@@ -8,10 +8,18 @@ var _choices := 0
 var _last_phase := -1
 var _last_thought := ""
 var _pressed: Array[String] = []
+var _phone_done := ""
+var _kitchen_visited := false
+var _copy_visited := false
+var _turned := false
 
 
 func _ready() -> void:
 	Engine.time_scale = 6.0
+	Game.godmode = not ("--nogod" in OS.get_cmdline_user_args()) # de bot kan niet wegrennen van het wezen
+	if "--good" in OS.get_cmdline_user_args():
+		Game.help = 5 # test het goede einde
+
 	print("[bot] start")
 
 
@@ -79,10 +87,43 @@ func _process(delta: float) -> void:
 				print("[bot]   naar bed")
 				Game.complete_task("bed")
 		Game.Phase.NIGHT:
+			if hud._phone_hint.text != "" and hud._phone_hint.text != _phone_done:
+				_phone_done = hud._phone_hint.text
+				print("[bot]   telefoon: ", _phone_done)
+				Game.phone_pressed.emit()
+				return
+			if "--awake" in OS.get_cmdline_user_args() and Game.day >= 6:
+				# test het geheime einde: nooit uit bed, altijd onder de deken
+				if player.state == Player.State.LYING and not player.hiding and player.allow_get_up:
+					print("[bot]   blijf onder de deken...")
+					player.set_hiding(true)
+				return
 			if player.state == Player.State.LYING:
-				if player.allow_get_up:
+				if ap.shadow.visible and player.can_hide and not player.hiding:
+					print("[bot]   verstoppen onder de deken!")
+					player.set_hiding(true)
+				elif player.hiding and not ap.shadow.visible and not ap.stalker.visible:
+					player.set_hiding(false)
+				elif player.allow_get_up:
 					print("[bot]   uit bed")
 					player.get_up()
+				return
+			if "--nogod" in OS.get_cmdline_user_args() and Game.day >= 6:
+				if not _turned:
+					_turned = true
+					player._yaw += PI # kijk weg van de deur
+				return # test: blijf stilstaan tot het wezen je pakt
+			if ap.long_hall and not _copy_visited:
+				_copy_visited = true
+				print("[bot]   naar de kopie-kamer")
+				player.global_position = Vector3(21.6, 0, 4.2)
+				_cooldown = 3.0
+				return
+			if ap._fridge_open.visible and not _kitchen_visited:
+				_kitchen_visited = true
+				print("[bot]   naar de keuken")
+				player.global_position = Vector3(9.5, 0, 7.5)
+				_cooldown = 3.0
 				return
 			if ap.spots.package.active:
 				print("[bot]   pakketje open")
@@ -117,5 +158,6 @@ func _send(action: String, pressed: bool) -> void:
 
 
 func _exit_tree() -> void:
+	print("[bot] einde: ", Game.flags.get("ending", "?"))
 	print("[bot] terug naar menu -> klaar. uitputting=%d hulp=%d flags=%s orders=%s" % [Game.exhaustion, Game.help, Game.flags, Game.orders])
 	get_tree().quit()

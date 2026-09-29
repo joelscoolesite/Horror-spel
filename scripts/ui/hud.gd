@@ -13,6 +13,7 @@ var _card: Label
 var _choice: ColorRect
 var _choice_label: Label
 var _pause: ColorRect
+var _phone_hint: Label
 
 var _objective_list: Array = [] ## [[id, tekst, klaar?], ...]
 var _thought_tween: Tween
@@ -92,6 +93,12 @@ func _ready() -> void:
 	_card.modulate.a = 0.0
 
 	# Keuzes komen BOVEN het zwarte scherm (anders zie je ze niet als het beeld zwart is)
+	_phone_hint = _label(HORIZONTAL_ALIGNMENT_RIGHT, Color(0.7, 0.85, 1.0))
+	_phone_hint.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_phone_hint.offset_left = -200
+	_phone_hint.offset_right = -8
+	_phone_hint.offset_top = 20
+
 	_choice = ColorRect.new()
 	_choice.color = Color(0, 0, 0, 0.8)
 	_choice.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -259,6 +266,11 @@ func show_page(text: String) -> void:
 	Sfx.play("ui_click")
 	if player:
 		player.locked = was_locked
+
+
+## Rechtsboven: wat de telefoon (T) nu kan doen. Leeg = niks tonen.
+func set_phone_hint(text: String) -> void:
+	_phone_hint.text = text
 
 
 # ------------------------------------------------------------------ batterij

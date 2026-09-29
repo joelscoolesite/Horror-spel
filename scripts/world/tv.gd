@@ -13,6 +13,7 @@ var spot: TaskSpot
 var _screen_mat: ShaderMaterial
 var _light: OmniLight3D
 var _audio: AudioStreamPlayer3D
+var _message: Label3D
 
 
 func build() -> void:
@@ -43,6 +44,10 @@ func build() -> void:
 	_audio.unit_size = 4.0
 	add_child(_audio)
 
+	_message = Build.label(self, "", Vector3(-0.05, 0.79, -0.01), Color(1.0, 0.12, 0.08), 48)
+	_message.pixel_size = 0.0022
+	_message.no_depth_test = true
+
 	spot = TaskSpot.new()
 	spot.task_id = "tv"
 	add_child(spot)
@@ -66,6 +71,11 @@ func set_mode(m: Mode) -> void:
 			_audio.stream = Sfx.stream("tv_static")
 			_audio.volume_db = 6.0
 			_audio.play()
+
+
+## Tekst op het scherm (bijv. "LOOK BEHIND YOU"). Leeg = geen tekst.
+func set_message(text: String) -> void:
+	_message.text = text
 
 
 func _process(_delta: float) -> void:

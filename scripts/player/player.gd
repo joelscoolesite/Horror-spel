@@ -237,6 +237,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_release_drag()
 	elif event.is_action_pressed("flashlight"):
 		set_flashlight(not flashlight_on)
+	elif event.is_action_pressed("phone"):
+		Game.phone_pressed.emit()
 	elif event.is_action_pressed("hide"):
 		if state == State.LYING and can_hide:
 			set_hiding(not hiding)

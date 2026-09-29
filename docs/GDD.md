@@ -16,7 +16,7 @@ Dingen gemarkeerd met 💡 zijn ideeën die Claude heeft toegevoegd, die kan je 
 | **Engine** | Godot 4.x |
 | **Platform** | Windows (PC) |
 | **Taal in de game** | Engels |
-| **Lengte** | 5 dagen / 5 nachten, ongeveer 30–60 minuten |
+| **Lengte** | 6 dagen / 6 nachten (maandag t/m zaterdag), ongeveer 45–60 minuten |
 | **Setting** | Een klein appartement (alles op één verdieping) + korte schoolscène |
 | **Eindes** | Meerdere, afhankelijk van je keuzes |
 
@@ -212,43 +212,50 @@ De klok staat elke nacht later, alsof je steeds minder slaapt 💡:
 - **Doel:** de speler twijfelt voor het eerst aan wat echt is.
 
 ### Nacht 4 — *Het huis klopt niet*
-- De gang is langer. Er is een extra deur.
-- Achter de extra deur: jouw slaapkamer. Met iemand in bed. (Jij?) 💡
-- De kasten gaan nu soms vanzelf een stukje open terwijl je ernaar kijkt.
-- De late voetstappen komen bij elke stap **dichterbij**. Als je je omdraait: niks, en dan stoppen ze.
-- **Gekras van binnenuit een kast.** Luister je (`Q`), dan stopt het en hoor je ademhaling. Doe je hem open: leeg.
-- Als je te lang rondloopt gaan de lichten één voor één uit richting jou → je moet naar bed en **onder de deken**.
+- De gang is **langer**. Aan het eind is een deur die er nooit was.
+- Achter die deur: een kopie van jouw kamer, rood licht van de wekker (03:33)... en **iemand in jouw bed**. Als je dichtbij komt, draait het hoofd naar je toe. Het ben jij.
+- Daarna sta je weer in de gang. Die is weer normaal.
+- Kasten gaan **vanzelf een stukje open** terwijl je ernaar kijkt.
+- De late voetstappen lopen nog dichter achter je.
+- Terug in bed: **iets in je deuropening**. Verstop je onder de deken (`Spatie`). Doe je dat niet, dan komt het dichterbij.
 - **Doel:** de "regels" van nacht 1–3 breken. Verstoppen wordt belangrijk.
 
-### Nacht 5 — *Het is er echt (of niet)*
-- Nu kan het fout gaan. Er is een **gestalte** in het appartement (vaag, donker, altijd net buiten je zaklamp).
-- Als hij je te dichtbij komt → game over, nacht opnieuw.
-- De voetstappen lopen niet meer jouw ritme maar **hun eigen, snellere tempo**. Zo hoor je waar de gestalte is.
-- Je kan: verstoppen onder de deken, lichten aandoen om hem te laten verdwijnen, en je moet een keuze maken (zie eindes).
-- Onder de deken: **gekras op de deur → de muur → het bedframe**, steeds dichterbij. Blijf stil liggen tot het stopt.
-- **Doel:** climax, alles komt samen.
+### Nacht 5 — *Mama?*
+- Je hoort de stem van je moeder: *"Sweetie? Can you come to the kitchen?"* Maar mama werkt nachtdiensten.
+- In de keuken: niemand. De koelkast staat wagenwijd open.
+- De TV springt aan: **LOOK BEHIND YOU**. Als je je omdraait... staat het achter je.
+- Daarna: **gekras van binnenuit de kast** in mama's kamer. Als je hem opentrekt, springt er iets uit.
+- Je wordt wakker in bed. Je kan mama appen (`T`). Dat telt voor het goede einde.
+- **Doel:** het wezen is er echt. De laatste "veilige" regel (kasten zijn leeg) is kapot.
+
+### Nacht 6 — *Het is er echt (of niet)* (finale)
+- Het wezen loopt door het huis, via de deuren. Je hoort zijn eigen voetstappen.
+- **Het beweegt alleen als je niet kijkt.** Schijn er 2,5 seconde met je telefoonlicht op, dan verdwijnt het (even).
+- Komt het te dichtbij: **"It got you."** De nacht begint opnieuw.
+- Lig je in bed? Dan komt het naar je kamer en krabt het aan de deur, de muur en je bed. Blijf onder de deken. Kijk je, dan pakt het je.
+- Hoe het afloopt, hangt af van wat je doet (zie §7).
 
 ---
 
 ## 7. Eindes
 
-Er worden stilletjes twee dingen bijgehouden 💡 (de speler ziet deze getallen nooit):
+Er worden stilletjes twee dingen bijgehouden (de speler ziet deze getallen nooit):
 
-| Stat | Gaat omhoog als je... | Gaat omlaag als je... |
-|---|---|---|
-| **Uitputting** | lang doorgamet, lunch vergeet, alles checkt, telefoon niet oplaadt | op tijd naar bed gaat, ontbijt eet, onder de deken blijft |
-| **Hulp** | eerlijk antwoord geeft op school, je ouder appt, het nieuwsartikel over slaap leest | steeds "I'm fine." zegt, berichten negeert |
+| Stat | Gaat omhoog als je... |
+|---|---|
+| **Uitputting** | lang doorgamet, eten/lunch overslaat, alle kasten checkt, enge nieuwsberichten leest |
+| **Hulp** | eerlijk bent tegen de leraar, na de les gaat praten, slaaptips leest, mama eerlijk appt, de schoolcounselor belt, mama appt in nacht 5 |
+
+Uitputting maakt het wezen in nacht 6 sneller.
 
 ### Einde 1 — "Morning" (goed einde)
-Hoge **Hulp**, niet te hoge **Uitputting**.
-In nacht 5 bel je je ouder in plaats van de laatste kast open te doen. Dit keer neemt die op. Het scherm wordt licht. Je wordt wakker, zon komt binnen, er staat een lunch voor je klaar met een briefje.
+Nodig: **Hulp 3 of meer**. In nacht 6 appt mama: *"Are you awake? I have a bad feeling. Call me."* Druk op `T` en **bel mama**. Ze blijft aan de telefoon en komt naar huis. 's Ochtends ligt er een boterham met een briefje: *"Tomorrow we'll go talk to someone. Together."*
 
 ### Einde 2 — "Check Again" (slecht einde)
-Hoge **Uitputting**, lage **Hulp**.
-Je opent de laatste kast. Binnenin: jij, die naar jou kijkt en zegt: *"Something is inside my house."* De game begint opnieuw bij dag 1, maar alles is iets donkerder. (Loop die nooit stopt.)
+Je blijft in nacht 6 kasten checken. In de laatste kast sta **jij**, die naar jou kijkt en zegt: *"Something is inside my house."* Daarna check je de volgende kast. En de volgende. Elke nacht.
 
-### Einde 3 — "Awake" (geheim einde) 💡
-Je gaat in nacht 5 helemaal niet uit bed, je blijft de hele nacht onder de deken. Je hoort alles, maar kijkt niet. Na een lange stilte: de wekker gaat. Het is ochtend. Onduidelijk of het voorbij is.
+### Einde 3 — "Awake" (geheim einde)
+Je stapt in nacht 6 **helemaal niet uit bed** en blijft onder de deken, ook als het aan je bed krabt. Na een lange tijd gaat de wekker. Was het er ooit echt?
 
 ---
 
@@ -302,9 +309,9 @@ Klein houden = haalbaar. Voorstel voor de plattegrond:
 
 ## 10. Bouwplan (stap voor stap)
 
-> **Status:** fase 1 t/m 6 zijn gebouwd, plus dag 3 en nacht 3. Dag 1 t/m 3 en nacht 1 t/m 3 zijn speelbaar.
+> **Status:** de hele game is speelbaar: 6 dagen, 6 nachten en 3 eindes.
 > Alle modellen, textures en geluiden zijn door code gemaakt (zie `tools/`).
-> Volgende stap: nacht 4, nacht 5 en de eindes.
+> Volgende stap: testen, eng genoeg maken, en fase 8 (afwerken).
 
 Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, dan uitbreiden.** Elke stap is een klein "af" ding.
 

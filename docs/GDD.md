@@ -148,6 +148,32 @@ Deze vier dingen lopen door de hele game heen en worden elke dag sterker.
 - Voetstappen die precies gelijk lopen met die van jou... en dan één stap te veel.
 - De TV die ineens op ruis springt (nacht 2).
 
+#### Gekras op de deur
+Een langzaam, droog krassen, alsof iemand met nagels over hout gaat. Het wordt elke nacht erger:
+
+| Nacht | Wat je hoort |
+|---|---|
+| 1–2 | Niks. |
+| 3 | Je wordt **wakker van gekras** op je slaapkamerdeur. Het stopt zodra je uit bed stapt. Doe je de deur open: lege gang. |
+| 4 | Het gekras komt nu van **binnenuit een kast**. Als je gaat luisteren (`Q`) stopt het, en dan hoor je iets zachtjes ademen. |
+| 5 | Terwijl je onder de deken ligt krast het op je **deur, dan op de muur, dan op het bedframe**. Steeds dichterbij. Niet kijken. |
+
+- Het geluid komt altijd uit een echte richting (3D-geluid), dus met een koptelefoon kan je horen *welke* deur het is.
+- 💡 Soms krast het met hetzelfde ritme als een liedje dat overdag in je game op TV speelde.
+
+#### Late voetstappen
+Jouw eigen voetstappen, maar met een vertraging, alsof er iemand vlak achter je precies hetzelfde loopt.
+
+| Nacht | Wat je hoort |
+|---|---|
+| 1 | Niks, je voetstappen klinken normaal. |
+| 2 | Als je stilstaat hoor je **één voetstap te veel**. Maar één keer, zodat de speler denkt dat hij het zich inbeeldde. |
+| 3 | De voetstappen lopen een **halve seconde achter** op die van jou. Sta je stil, dan lopen ze nog 2–3 stappen door. |
+| 4 | Ze komen **dichterbij** bij elke stap die je zet. Draai je je om: niks. En dan stoppen ze ook. |
+| 5 | Ze lopen niet meer jouw ritme, ze lopen **hun eigen tempo**. Iets sneller dan jij. |
+
+- 💡 Op de vloer in de gang ligt een ander materiaal (bijv. laminaat vs. tapijt). Loop jij op tapijt, dan hoor je de late voetstappen toch op laminaat. Dat verraadt dat ze niet van jou zijn.
+
 ---
 
 ## 6. De 5 nachten uitgewerkt
@@ -167,11 +193,14 @@ De klok staat elke nacht later, alsof je steeds minder slaapt 💡:
 - Je checkt alle kasten. Niks.
 - Op weg terug springt de **TV ineens aan op ruis**, keihard in de stilte.
 - Je moet naar de woonkamer lopen en hem uitzetten.
+- Als je bij de TV stilstaat: **één voetstap te veel** achter je.
 - Terug naar bed.
 - **Doel:** de eerste echte schrik. Nog steeds niks "echts" gezien.
 
 ### Nacht 3 — *De lichten*
+- Je wordt wakker van **gekras op je slaapkamerdeur**. Het stopt zodra je uit bed stapt.
 - Een van de kasten staat al op een kiertje als je wakker wordt.
+- Je voetstappen klinken **een halve seconde te laat**, en lopen nog even door als jij stilstaat.
 - De lichtschakelaar in de gang werkt niet → je moet je telefoonlicht gebruiken (en de batterij is niet vol).
 - Het pakketje van Amazin staat voor de deur. 💡 Er zit jouw eigen lunchtrommel in, met een boterham die al dagen oud is.
 - Je hoort je naam vanuit de badkamer. In de spiegel beweegt je spiegelbeeld een beetje te laat.
@@ -181,14 +210,17 @@ De klok staat elke nacht later, alsof je steeds minder slaapt 💡:
 - De gang is langer. Er is een extra deur.
 - Achter de extra deur: jouw slaapkamer. Met iemand in bed. (Jij?) 💡
 - De kasten gaan nu soms vanzelf een stukje open terwijl je ernaar kijkt.
-- Voetstappen volgen je. Als je je omdraait: niks.
+- De late voetstappen komen bij elke stap **dichterbij**. Als je je omdraait: niks, en dan stoppen ze.
+- **Gekras van binnenuit een kast.** Luister je (`Q`), dan stopt het en hoor je ademhaling. Doe je hem open: leeg.
 - Als je te lang rondloopt gaan de lichten één voor één uit richting jou → je moet naar bed en **onder de deken**.
 - **Doel:** de "regels" van nacht 1–3 breken. Verstoppen wordt belangrijk.
 
 ### Nacht 5 — *Het is er echt (of niet)*
 - Nu kan het fout gaan. Er is een **gestalte** in het appartement (vaag, donker, altijd net buiten je zaklamp).
 - Als hij je te dichtbij komt → game over, nacht opnieuw.
+- De voetstappen lopen niet meer jouw ritme maar **hun eigen, snellere tempo**. Zo hoor je waar de gestalte is.
 - Je kan: verstoppen onder de deken, lichten aandoen om hem te laten verdwijnen, en je moet een keuze maken (zie eindes).
+- Onder de deken: **gekras op de deur → de muur → het bedframe**, steeds dichterbij. Blijf stil liggen tot het stopt.
 - **Doel:** climax, alles komt samen.
 
 ---
@@ -294,7 +326,8 @@ Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, d
 ### Fase 4 — Het appartement
 - [ ] Hele plattegrond bouwen (nog met simpele blokken).
 - [ ] Alle 5 kasten, lichtknoppen, bed, TV.
-- [ ] Geluid toevoegen: voetstappen, deur-piep, sfeergeluid.
+- [ ] Geluid toevoegen: voetstappen, deur-piep, sfeergeluid, gekras.
+- [ ] Late voetstappen: bij elke stap van de speler dezelfde voetstap nog een keer afspelen, maar met vertraging (een `Timer` of `await get_tree().create_timer(0.5).timeout`) en vanaf een punt achter de speler (`AudioStreamPlayer3D`).
 
 ### Fase 5 — Nacht 1 & 2 speelbaar (= je eerste demo!)
 - [ ] Wakker worden → tekst → kasten checken → terug naar bed.

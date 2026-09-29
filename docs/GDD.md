@@ -297,6 +297,10 @@ Klein houden = haalbaar. Voorstel voor de plattegrond:
 
 ## 10. Bouwplan (stap voor stap)
 
+> **Status:** fase 1 t/m 6 zijn gebouwd. Dag 1 + nacht 1 en dag 2 + nacht 2 zijn speelbaar.
+> Alle modellen, textures en geluiden zijn door code gemaakt (zie `tools/`).
+> Volgende stap: fase 7 (nacht 3, 4, 5 en de eindes).
+
 Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, dan uitbreiden.** Elke stap is een klein "af" ding.
 
 ### Fase 0 — Godot leren (1–2 weken)
@@ -305,40 +309,40 @@ Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, d
 - [ ] Snappen wat **nodes**, **scenes** en **scripts (GDScript)** zijn.
 
 ### Fase 1 — Rondlopen (eerste echte stap)
-- [ ] Nieuw Godot-project aanmaken in deze repo.
-- [ ] Een simpele kamer maken van blokken (CSG-boxes of MeshInstance3D).
-- [ ] First-person speler: lopen met WASD, kijken met muis.
+- [x] Nieuw Godot-project aanmaken in deze repo.
+- [x] Een simpele kamer maken van blokken (CSG-boxes of MeshInstance3D).
+- [x] First-person speler: lopen met WASD, kijken met muis.
 - [ ] ✅ **Klaar als:** je door een grijze kamer kan lopen.
 
 ### Fase 2 — De PS1-look
-- [ ] Game laten renderen op lage resolutie (SubViewport of project-instelling).
-- [ ] Een gratis PS1-shader toevoegen (zoek op "godot psx shader", er zijn er genoeg gratis op GitHub/godotshaders.com).
-- [ ] Mist en donkere belichting.
+- [x] Game laten renderen op lage resolutie (SubViewport of project-instelling).
+- [x] Een gratis PS1-shader toevoegen (zoek op "godot psx shader", er zijn er genoeg gratis op GitHub/godotshaders.com).
+- [x] Mist en donkere belichting.
 - [ ] ✅ **Klaar als:** de grijze kamer er al eng uitziet.
 
 ### Fase 3 — Interactie
-- [ ] Kijken naar een object → tekstje "E" verschijnt.
-- [ ] Lichtschakelaar die een lamp aan/uit zet.
-- [ ] Kastdeur die je met de muis langzaam opentrekt.
-- [ ] Telefoon-zaklamp.
+- [x] Kijken naar een object → tekstje "E" verschijnt.
+- [x] Lichtschakelaar die een lamp aan/uit zet.
+- [x] Kastdeur die je met de muis langzaam opentrekt.
+- [x] Telefoon-zaklamp.
 - [ ] ✅ **Klaar als:** je in één kamer een kast kan openen en het licht aan/uit kan doen.
 
 ### Fase 4 — Het appartement
-- [ ] Hele plattegrond bouwen (nog met simpele blokken).
-- [ ] Alle 5 kasten, lichtknoppen, bed, TV.
-- [ ] Geluid toevoegen: voetstappen, deur-piep, sfeergeluid, gekras.
+- [x] Hele plattegrond bouwen (nog met simpele blokken).
+- [x] Alle 5 kasten, lichtknoppen, bed, TV.
+- [x] Geluid toevoegen: voetstappen, deur-piep, sfeergeluid, gekras.
 - [ ] Late voetstappen: bij elke stap van de speler dezelfde voetstap nog een keer afspelen, maar met vertraging (een `Timer` of `await get_tree().create_timer(0.5).timeout`) en vanaf een punt achter de speler (`AudioStreamPlayer3D`).
 
 ### Fase 5 — Nacht 1 & 2 speelbaar (= je eerste demo!)
-- [ ] Wakker worden → tekst → kasten checken → terug naar bed.
-- [ ] Nacht 2: TV springt op ruis.
-- [ ] Een simpel "GameState"-script dat onthoudt welke nacht het is.
+- [x] Wakker worden → tekst → kasten checken → terug naar bed.
+- [x] Nacht 2: TV springt op ruis.
+- [x] Een simpel "GameState"-script dat onthoudt welke nacht het is.
 - [ ] ✅ **Klaar als:** een vriend het kan spelen en schrikt van de TV. 🎉
 
 ### Fase 6 — De dag
-- [ ] Ochtend: brood smeren, lunch (optioneel).
-- [ ] School-scène (één kamer + tekst).
-- [ ] Middag: TV-game, Amazin, nieuws, lichten uit.
+- [x] Ochtend: brood smeren, lunch (optioneel).
+- [x] School-scène (voor nu alleen tekst op zwart, nog geen 3D-klaslokaal).
+- [x] Middag: TV-game, Amazin, nieuws, lichten uit.
 
 ### Fase 7 — Nacht 3, 4, 5 + eindes
 - [ ] Alle events uit §6.
@@ -346,7 +350,7 @@ Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, d
 - [ ] De drie eindes.
 
 ### Fase 8 — Afwerken
-- [ ] Menu (Start, Settings, Quit).
+- [x] Menu (Start, Settings, Quit).
 - [ ] Echte modellen/textures i.p.v. blokken.
 - [ ] Laten testen door vrienden, dingen fixen.
 - [ ] Eventueel op itch.io zetten.

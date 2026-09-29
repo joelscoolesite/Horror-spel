@@ -28,7 +28,7 @@ var flags := {}
 var orders: Array[String] = []
 
 ## Instellingen
-var mouse_sensitivity := 0.0022
+var mouse_sensitivity := 0.0025
 
 ## Snelle verwijzingen naar belangrijke nodes (worden gezet als ze laden).
 var player: Node = null

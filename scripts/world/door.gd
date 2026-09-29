@@ -91,7 +91,7 @@ func drag_begin() -> void:
 
 func drag(motion: Vector2) -> void:
 	# Muis naar beneden = naar je toe trekken = open.
-	set_angle(angle + motion.y * 0.18)
+	set_angle(angle + motion.y * 0.08)
 
 
 func drag_end() -> void:

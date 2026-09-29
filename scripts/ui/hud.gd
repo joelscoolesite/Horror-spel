@@ -31,11 +31,15 @@ func _ready() -> void:
 	_root.theme = theme
 	add_child(_root)
 
+	# puntje in het midden van het scherm (waar je naar kijkt)
 	var dot := ColorRect.new()
 	dot.color = Color(1, 1, 1, 0.5)
-	dot.size = Vector2(1, 1)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dot.set_anchors_preset(Control.PRESET_CENTER)
-	dot.position = Vector2(-0.5, -0.5)
+	dot.offset_left = -1
+	dot.offset_top = -1
+	dot.offset_right = 0
+	dot.offset_bottom = 0
 	_root.add_child(dot)
 
 	_prompt = _label(HORIZONTAL_ALIGNMENT_CENTER, Color(0.9, 0.9, 0.85))
@@ -64,6 +68,7 @@ func _ready() -> void:
 	_battery_bg.position = Vector2(-34, 8)
 	_battery_bg.size = Vector2(24, 8)
 	_battery_bg.visible = false
+	_battery_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_battery_bg)
 	_battery_bar = ColorRect.new()
 	_battery_bar.color = Color(0.8, 0.9, 0.8)
@@ -284,6 +289,17 @@ func _build_pause_menu() -> void:
 	title.text = "PAUSED"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
+	var sens_label := Label.new()
+	sens_label.text = "Mouse sensitivity"
+	sens_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(sens_label)
+	var slider := HSlider.new()
+	slider.min_value = 0.0005
+	slider.max_value = 0.008
+	slider.step = 0.0001
+	slider.value = Game.mouse_sensitivity
+	slider.value_changed.connect(func(v): Game.mouse_sensitivity = v)
+	box.add_child(slider)
 	for item in [["Resume", _toggle_pause], ["Main menu", _to_menu], ["Quit", func(): get_tree().quit()]]:
 		var b := Button.new()
 		b.text = item[0]
@@ -294,6 +310,15 @@ func _build_pause_menu() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		_toggle_pause()
+	# Muis "kwijt" (bijv. na alt-tab)? Klik in het venster om hem terug te pakken.
+	elif event is InputEventMouseButton and event.pressed and not get_tree().paused:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and not get_tree().paused:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 func _toggle_pause() -> void:

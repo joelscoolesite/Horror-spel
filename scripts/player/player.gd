@@ -175,13 +175,13 @@ func set_hiding(on: bool) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if _dragging:
-			_dragging.drag(event.relative)
+			_dragging.drag(event.screen_relative)
 			return
 		if locked or hiding:
 			return
 		var sens := Game.mouse_sensitivity
-		_yaw -= event.relative.x * sens
-		_pitch = clampf(_pitch - event.relative.y * sens, -1.45, 1.45)
+		_yaw -= event.screen_relative.x * sens
+		_pitch = clampf(_pitch - event.screen_relative.y * sens, -1.45, 1.45)
 		if state == State.LYING:
 			_yaw = clampf(_yaw, -1.6, 1.6)
 			_pitch = clampf(_pitch, -0.6, 1.2)

@@ -31,15 +31,30 @@ Nacht 3, 4 en 5 en de eindes komen nog.
 | `W A S D` | Lopen |
 | Muis | Rondkijken |
 | `E` | Iets doen (licht, taak, deur snel open) |
-| Linkermuisknop vasthouden + muis omlaag | Deur/kast **langzaam** opentrekken |
+| Linkermuisknop vasthouden + muis omlaag | Kamerdeur **langzaam** opentrekken |
 | `F` | Telefoonlicht |
 | `Q` (vasthouden) | Luisteren |
 | `Ctrl` | Bukken |
 | `Spatie` (in bed) | Onder de deken |
 | `1` `2` `3` | Keuzes maken |
-| `Esc` | Pauze |
+| `Esc` | Pauze (hier zit ook de muisgevoeligheid) |
+| `=` | **Debug-menu** |
 
-### Direct naar een bepaald moment (om te testen)
+### Debug-menu (toets `=`)
+
+Hiermee kan je snel testen zonder alles opnieuw te spelen:
+
+- **Springen** naar dag 1 of 2: ochtend, school, avond of nacht
+- **Info** aan/uit: FPS, dag, fase, verborgen stats, positie, kamer, batterij
+- **Noclip** (door muren vliegen, Spatie = omhoog, Ctrl = omlaag) en **snel lopen**
+- Lichten aan/uit, alle kasten open/dicht, TV op ruis, sfeer dag/nacht
+- Schrikmomenten testen: gekras, voetstap achter je, schrik-effect
+- Uitputting en Hulp ophogen/verlagen
+
+Wil je het debug-menu uitzetten (bijv. als je de game aan vrienden geeft)?
+Zet `ENABLED` op `false` bovenin `scripts/ui/debug_menu.gd`.
+
+### Direct naar een bepaald moment (via Godot)
 
 In Godot: **Project → Project Settings → General → Editor → Run → Main Run Args**, en zet daar bijv.:
 

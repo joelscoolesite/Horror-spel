@@ -34,6 +34,11 @@ var flashlight_on := false
 var current_surface := "wood"
 ## 0..1: hoe bang het kind is (hartslag). Wordt door de nacht-regie gezet.
 var fear := 0.0
+## true = je hand ligt op een kast (hart bonkt, beeld zoomt in en trilt)
+var gripping := false
+## Debug: door muren vliegen / sneller lopen
+var noclip := false
+var speed_multiplier := 1.0
 
 var _yaw := 0.0
 var _pitch := 0.0
@@ -54,6 +59,8 @@ var _eye := EYE_HEIGHT
 var _moving_time := 0.0
 var _still_time := 0.0
 var _getting_up := false
+var _look_limits := Vector4(-1.6, 1.6, -0.6, 1.2) ## yaw min/max, pitch min/max als je ligt/zit
+var _safe_pos := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -119,6 +126,7 @@ func place_at(marker: Node3D) -> void:
 	_leave_bed_view()
 	state = State.WALK
 	global_position = marker.global_position
+	_safe_pos = global_position
 	_yaw = marker.global_rotation.y
 	_pitch = 0.0
 	velocity = Vector3.ZERO
@@ -134,9 +142,30 @@ func lie_in_bed(head: Node3D, stand: Node3D) -> void:
 	_lie_yaw = head.global_rotation.y
 	_yaw = 0.0
 	_pitch = 0.25
+	_look_limits = Vector4(-1.6, 1.6, -0.6, 1.2)
 	_head.top_level = true
 	_head.global_position = _lie_pos
 	set_flashlight(false)
+
+
+## Ga zitten (bijv. op school). Je kan rondkijken, maar niet lopen.
+func sit_at(head: Node3D) -> void:
+	lie_in_bed(head, head)
+	_pitch = -0.05
+	_look_limits = Vector4(-1.9, 1.9, -0.8, 0.6)
+
+
+## Waar je hand vandaan komt als je iets vastpakt (vlak voor de camera, onderin).
+func hand_start_position() -> Vector3:
+	var b := _camera.global_basis
+	return _camera.global_position - b.z * 0.25 - b.y * 0.3 + b.x * 0.1
+
+
+## Kijkt de speler ongeveer naar dit punt? (binnen `max_degrees` graden)
+func is_looking_at(point: Vector3, max_degrees := 15.0) -> bool:
+	var forward := -_camera.global_basis.z
+	var to := (point - _camera.global_position).normalized()
+	return rad_to_deg(forward.angle_to(to)) < max_degrees
 
 
 func get_up() -> void:
@@ -183,8 +212,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_yaw -= event.screen_relative.x * sens
 		_pitch = clampf(_pitch - event.screen_relative.y * sens, -1.45, 1.45)
 		if state == State.LYING:
-			_yaw = clampf(_yaw, -1.6, 1.6)
-			_pitch = clampf(_pitch, -0.6, 1.2)
+			_yaw = clampf(_yaw, _look_limits.x, _look_limits.y)
+			_pitch = clampf(_pitch, _look_limits.z, _look_limits.w)
 		return
 
 	if locked:
@@ -240,6 +269,15 @@ func _physics_process(delta: float) -> void:
 	_update_focus()
 	_update_flashlight(delta)
 	_update_heartbeat(delta)
+	_update_grip(delta)
+
+
+func _update_grip(delta: float) -> void:
+	_camera.fov = lerpf(_camera.fov, 60.0 if gripping else 72.0, 2.5 * delta)
+	if gripping:
+		_camera.position = Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * 0.004
+	else:
+		_camera.position = Vector3.ZERO
 
 
 func _walk(delta: float) -> void:
@@ -252,6 +290,16 @@ func _walk(delta: float) -> void:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var crouching := not locked and Input.is_action_pressed("crouch")
 	var speed := CROUCH_SPEED if crouching else (NIGHT_SPEED if night_mode else DAY_SPEED)
+	if noclip:
+		var fly := _camera.global_basis * Vector3(input.x, 0, input.y)
+		if Input.is_action_pressed("hide"):
+			fly.y += 1.0
+		if crouching:
+			fly.y -= 1.0
+		global_position += fly * 5.0 * speed_multiplier * delta
+		velocity = Vector3.ZERO
+		return
+	speed *= speed_multiplier
 	var dir := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
 	var target := dir * speed
 	velocity.x = lerpf(velocity.x, target.x, 10.0 * delta)
@@ -261,6 +309,12 @@ func _walk(delta: float) -> void:
 	else:
 		velocity.y = -0.1
 	move_and_slide()
+	# Veiligheid: val je ergens doorheen, dan sta je weer op de laatste veilige plek.
+	if is_on_floor():
+		_safe_pos = global_position
+	elif global_position.y < -3.0:
+		global_position = _safe_pos
+		velocity = Vector3.ZERO
 
 	var hspeed := Vector2(velocity.x, velocity.z).length()
 	# voetstappen
@@ -347,8 +401,8 @@ func _update_flashlight(delta: float) -> void:
 
 func _update_heartbeat(delta: float) -> void:
 	var target := fear
-	if _dragging and night_mode:
-		target = maxf(target, 0.75)
+	if (_dragging and night_mode) or gripping:
+		target = maxf(target, 0.9)
 	if listening:
 		target = maxf(target, 0.4)
 	var level := db_to_linear(_heartbeat.volume_db)

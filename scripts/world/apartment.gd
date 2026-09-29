@@ -83,6 +83,12 @@ func set_mood(mood: String) -> void:
 			env.fog_density = 0.025
 			_set_windows(Color(0.75, 0.82, 0.92), Color(0.95, 0.93, 0.85), 0.0, Color(0.9, 0.92, 1.0), 1.3, 5.0)
 			set_all_lights(false)
+		"school":
+			env.ambient_light_color = Color(0.8, 0.8, 0.85)
+			env.ambient_light_energy = 0.6
+			env.fog_light_color = Color(0.7, 0.72, 0.75)
+			env.fog_density = 0.02
+			set_all_lights(false)
 		"evening":
 			env.ambient_light_color = Color(0.4, 0.33, 0.42)
 			env.ambient_light_energy = 0.3
@@ -188,7 +194,8 @@ func _build_shell() -> void:
 		var r: Rect2 = ROOMS[room]
 		var center := Vector3(r.position.x + r.size.x * 0.5, 0, r.position.y + r.size.y * 0.5)
 		var f: Array = floors[room]
-		var fl := Build.box(self, Vector3(r.size.x, 0.1, r.size.y), center - Vector3(0, 0.1, 0), Build.mat(f[0], w, f[1], true), true, "Floor_" + room)
+		# dikke vloer (1 meter), zodat je er nooit doorheen kan zakken
+		var fl := Build.box(self, Vector3(r.size.x, 1.0, r.size.y), center - Vector3(0, 1.0, 0), Build.mat(f[0], w, f[1], true), true, "Floor_" + room)
 		fl.get_child(0).set_meta("surface", f[2])
 		Build.box(self, Vector3(r.size.x, 0.1, r.size.y), center + Vector3(0, H, 0), Build.mat("ceiling", w, 1.0, true), false, "Ceiling_" + room)
 
@@ -278,7 +285,7 @@ func _room_door(room_name: String, x0: float, x1: float, z: float) -> void:
 	# deurlijst
 	var trim := Build.mat("wood_white", Color(0.9, 0.9, 0.88))
 	for side in [-1.0, 1.0]:
-		Build.box(self, Vector3(0.06, 2.12, T + 0.04), Vector3(x0 if side < 0 else x1, 0, z), trim, false)
+		Build.box(self, Vector3(0.06, 2.1, T + 0.04), Vector3(x0 if side < 0 else x1, 0, z), trim, false)
 	Build.box(self, Vector3(x1 - x0 + 0.12, 0.06, T + 0.04), Vector3((x0 + x1) * 0.5, 2.1, z), trim, false)
 
 
@@ -287,7 +294,8 @@ func _window(pos: Vector3, yaw: float, size: Vector2) -> void:
 	var m := ShaderMaterial.new()
 	m.shader = preload("res://shaders/window.gdshader")
 	Build.quad(g, size, Vector3.ZERO, m)
-	Build.box(g, Vector3(size.x + 0.1, 0.04, 0.25), Vector3(0, -size.y * 0.5 - 0.04, 0.05), Build.mat("wood_white"), false)
+	# vensterbank (net boven de muur eronder, zodat ze niet flikkeren)
+	Build.box(g, Vector3(size.x + 0.1, 0.04, 0.25), Vector3(0, -size.y * 0.5 + 0.005, 0.05), Build.mat("wood_white"), false)
 	# gordijnen
 	for side in [-1.0, 1.0]:
 		Build.box(g, Vector3(0.3, size.y + 0.5, 0.04), Vector3(side * (size.x * 0.5 + 0.05), -size.y * 0.5 - 0.3, 0.15), Build.mat("fabric_sheet", Color(0.55, 0.45, 0.5)), false)
@@ -347,7 +355,7 @@ func _build_bedroom() -> void:
 	Props.nightstand(self, Vector3(1.45, 0, 0.455))
 	# wekker
 	Build.box(self, Vector3(0.07, 0.09, 0.16), Vector3(1.42, 0.5, 0.28), Build.mat("plastic_black"), false)
-	clock_label = Build.label(self, "07:00", Vector3(1.383, 0.545, 0.28), Color(1.0, 0.15, 0.1), 20)
+	clock_label = Build.label(self, "07:00", Vector3(1.37, 0.545, 0.28), Color(1.0, 0.15, 0.1), 20)
 	clock_label.rotation_degrees.y = -90.0
 	_alarm = AudioStreamPlayer3D.new()
 	_alarm.stream = Sfx.stream("alarm")
@@ -421,7 +429,7 @@ func _build_living_room() -> void:
 	Build.box(lid, Vector3(0.32, 0.22, 0.01), Vector3(0, 0, 0), Build.mat("metal", Color(0.5, 0.5, 0.55)), false)
 	_laptop_screen = ShaderMaterial.new()
 	_laptop_screen.shader = preload("res://shaders/screen.gdshader")
-	Build.quad(lid, Vector2(0.28, 0.18), Vector3(0, 0.11, 0.006), _laptop_screen)
+	Build.quad(lid, Vector2(0.28, 0.18), Vector3(0, 0.11, 0.015), _laptop_screen)
 	_spot("laptop", Vector3(4.3, 0.55, 8.35), Vector3(0.4, 0.3, 0.35))
 	# telefoon
 	Build.box(self, Vector3(0.07, 0.01, 0.14), Vector3(4.95, 0.42, 8.45), Build.mat("plastic_black"), false)

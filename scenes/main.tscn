@@ -7,12 +7,17 @@
 [ext_resource type="Script" path="res://scripts/ui/post_fx.gd" id="5_post"]
 [ext_resource type="Script" path="res://scripts/story/day_director.gd" id="6_day"]
 [ext_resource type="Script" path="res://scripts/story/night_director.gd" id="7_night"]
+[ext_resource type="Script" path="res://scripts/world/school.gd" id="8_school"]
+[ext_resource type="Script" path="res://scripts/ui/debug_menu.gd" id="9_debug"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 
 [node name="Apartment" type="Node3D" parent="."]
 script = ExtResource("2_apt")
+
+[node name="School" type="Node3D" parent="."]
+script = ExtResource("8_school")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 script = ExtResource("3_player")
@@ -24,6 +29,10 @@ script = ExtResource("5_post")
 [node name="HUD" type="CanvasLayer" parent="."]
 layer = 10
 script = ExtResource("4_hud")
+
+[node name="DebugMenu" type="CanvasLayer" parent="."]
+layer = 20
+script = ExtResource("9_debug")
 
 [node name="DayDirector" type="Node" parent="."]
 script = ExtResource("6_day")

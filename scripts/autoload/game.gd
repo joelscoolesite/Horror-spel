@@ -35,6 +35,11 @@ var player: Node = null
 var hud: Node = null
 var apartment: Node = null
 var post: Node = null
+var school: Node = null
+
+## Debug-menu: start bij deze fase na het herladen (-1 = normaal)
+var debug_start_phase := -1
+var debug_open := false
 
 
 func reset() -> void:

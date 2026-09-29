@@ -42,7 +42,7 @@ func _ready() -> void:
 	start.grab_focus()
 
 	var controls := Label.new()
-	controls.text = "WASD  walk\nMouse  look\nE  interact\nHold LMB  pull doors slowly\nF  phone light\nQ  listen\nCtrl  crouch\nSpace  hide (in bed)\nEsc  pause"
+	controls.text = "WASD  walk\nMouse  look\nE  interact\nHold LMB  pull room doors slowly\nF  phone light\nQ  listen\nCtrl  crouch\nSpace  hide (in bed)\nEsc  pause\n=  debug menu"
 	controls.add_theme_color_override("font_color", Color(0.45, 0.45, 0.45))
 	controls.position = Vector2(12, 100)
 	controls.add_theme_constant_override("line_spacing", -3)

@@ -50,6 +50,10 @@ func _run() -> void:
 
 
 func _read_start_args() -> int:
+	if Game.debug_start_phase >= 0:
+		var p := Game.debug_start_phase
+		Game.debug_start_phase = -1
+		return p
 	var phase := 0
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--day="):

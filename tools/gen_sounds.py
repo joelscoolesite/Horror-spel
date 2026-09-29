@@ -273,6 +273,26 @@ def tv_game():
     save("tv_game", np.concatenate(out), 0.5)
 
 
+def whisper():
+    """Gefluister: een paar 'lettergrepen' van ruis, met een beetje galm."""
+    total = 2.2
+    n = int(total * SR)
+    x = np.zeros(n)
+    # (start, lengte, klank-laag, klank-hoog) -> iets als "hé... ..."
+    for start, length, lo, hi in [(0.05, 0.28, 2500, 7000), (0.35, 0.35, 700, 2600), (0.8, 0.25, 900, 3000), (1.15, 0.45, 600, 2200)]:
+        m = int(length * SR)
+        a = int(start * SR)
+        seg = bandpass(white(length), lo, hi)
+        shape = np.sin(np.linspace(0, np.pi, m)) ** 1.5
+        x[a:a + m] += seg[:m] * shape
+    # galm: vertraagde zachtere kopieën
+    out = x.copy()
+    for d, g in [(0.07, 0.35), (0.13, 0.25), (0.21, 0.15)]:
+        k = int(d * SR)
+        out[k:] += x[:-k] * g
+    save("whisper", out, 0.7)
+
+
 def ui_click():
     n = int(0.05 * SR)
     save("ui_click", np.sin(2 * np.pi * 1200 * t(0.05)) * env(n, 0.001, 80), 0.4)
@@ -307,4 +327,5 @@ if __name__ == "__main__":
     tv_game()
     ui_click()
     pickup()
+    whisper()
     print("Klaar!")

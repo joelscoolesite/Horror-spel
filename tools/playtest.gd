@@ -84,6 +84,10 @@ func _process(delta: float) -> void:
 					print("[bot]   uit bed")
 					player.get_up()
 				return
+			if ap.spots.package.active:
+				print("[bot]   pakketje open")
+				Game.complete_task("package")
+				return
 			if ap.tv.spot.active:
 				print("[bot]   TV uit")
 				Game.complete_task("tv")

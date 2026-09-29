@@ -43,7 +43,7 @@ func _run() -> void:
 	Game.player.locked = true
 	await Game.hud.title_card([
 		"End of the demo.",
-		"Nights 3, 4 and 5 are coming...",
+		"Nights 4 and 5 are coming...",
 		"Thanks for playing.",
 	])
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")

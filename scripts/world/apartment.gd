@@ -34,6 +34,9 @@ var doors := {} ## naam -> Door (kamerdeuren)
 var switches: Array[LightSwitch] = []
 var markers := {} ## naam -> Marker3D (plekken waar de speler kan beginnen)
 var tv: TV
+var mirror: Mirror
+var lunchbox: MeshInstance3D
+var package: Node3D ## het pakketje van Amazin (nacht 3)
 var clock_label: Label3D
 var env: Environment
 
@@ -157,8 +160,21 @@ func reset_for(night: bool) -> void:
 		s.deactivate()
 	tv.set_mode(TV.Mode.OFF)
 	tv.spot.deactivate()
+	for s in switches:
+		s.broken = false
+	mirror.delay = 0.0
+	mirror.frozen = false
+	package.visible = false
+	lunchbox.visible = true
 	set_laptop_screen(false)
 	set_alarm(false)
+
+
+func switch_for(room: String) -> LightSwitch:
+	for s in switches:
+		if s.room == room:
+			return s
+	return null
 
 
 ## In welke kamer is dit punt? ("" = nergens)
@@ -384,6 +400,12 @@ func _build_bathroom() -> void:
 	Props.bathtub(self, Vector3(5.55, 0, 0.795), 0.0)
 	Props.toilet(self, Vector3(6.235, 0, 2.0), -90.0)
 	Props.bath_sink(self, Vector3(5.015, 0, 2.2), 90.0)
+	mirror = Mirror.new()
+	mirror.name = "Mirror"
+	mirror.position = Vector3(4.597, 1.45, 2.2)
+	mirror.rotation_degrees.y = 90.0
+	add_child(mirror)
+	mirror.build(self)
 	closets.append(Props.closet(self, "Closet_Bathroom", Vector3(6.525, 0, 3.0), -90.0, 0.6, 1.8, 0.4, Build.mat("wood_white"), false))
 	Props.rug(self, Vector3(5.6, 0, 1.7), Vector2(0.9, 0.6), "carpet")
 	_room_light("bathroom", Vector3(5.75, 0, 2.0), 4.0, Vector3(5.05, 1.2, 3.92), 180.0)
@@ -441,6 +463,13 @@ func _build_living_room() -> void:
 	Build.box(self, Vector3(0.02, 0.02, 0.02), Vector3(1.7, 1.45, 10.465), Build.mat("plastic_black"), false)
 	_spot("front_door", Vector3(1.7, 1.05, 10.4), Vector3(1.0, 2.0, 0.3))
 	_marker("front_door_in", Vector3(1.7, 0, 9.9), Vector3(2.8, 0, 6.0))
+	# pakketje (alleen in nacht 3 zichtbaar)
+	package = Build.group(self, "Package", Vector3(2.6, 0, 9.9), 20.0)
+	Build.box(package, Vector3(0.45, 0.3, 0.35), Vector3.ZERO, Build.mat("wood_light", Color(0.9, 0.7, 0.45)), false)
+	Build.box(package, Vector3(0.46, 0.02, 0.08), Vector3(0, 0.3, 0), Build.mat("plastic_white", Color(0.8, 0.75, 0.6)), false)
+	Build.box(package, Vector3(0.12, 0.005, 0.08), Vector3(0.1, 0.301, 0.1), Build.mat("plastic_white"), false)
+	package.visible = false
+	_spot("package", Vector3(2.6, 0.2, 9.9), Vector3(0.6, 0.5, 0.5))
 
 	_room_light("living", Vector3(3.5, 0, 8.0), 6.5, Vector3(2.1, 1.2, 5.58), 0.0)
 
@@ -460,7 +489,7 @@ func _build_kitchen() -> void:
 	Build.box(self, Vector3(0.35, 0.02, 0.22), Vector3(8.6, 0.9, 10.1), Build.mat("wood_light"), false)
 	Build.box(self, Vector3(0.24, 0.1, 0.12), Vector3(8.6, 0.92, 10.1), Build.mat("fabric_sheet", Color(0.85, 0.6, 0.3)), false)
 	_spot("bread", Vector3(8.6, 1.0, 10.1), Vector3(0.4, 0.25, 0.35))
-	Build.box(self, Vector3(0.2, 0.08, 0.14), Vector3(9.2, 0.9, 10.1), Build.mat("plastic_white", Color(0.3, 0.5, 0.9)), false)
+	lunchbox = Build.box(self, Vector3(0.2, 0.08, 0.14), Vector3(9.2, 0.9, 10.1), Build.mat("plastic_white", Color(0.3, 0.5, 0.9)), false)
 	_spot("lunch", Vector3(9.2, 1.0, 10.1), Vector3(0.3, 0.25, 0.3))
 
 	# klok aan de muur (tikt)

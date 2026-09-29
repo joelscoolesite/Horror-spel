@@ -302,9 +302,9 @@ Klein houden = haalbaar. Voorstel voor de plattegrond:
 
 ## 10. Bouwplan (stap voor stap)
 
-> **Status:** fase 1 t/m 6 zijn gebouwd. Dag 1 + nacht 1 en dag 2 + nacht 2 zijn speelbaar.
+> **Status:** fase 1 t/m 6 zijn gebouwd, plus dag 3 en nacht 3. Dag 1 t/m 3 en nacht 1 t/m 3 zijn speelbaar.
 > Alle modellen, textures en geluiden zijn door code gemaakt (zie `tools/`).
-> Volgende stap: fase 7 (nacht 3, 4, 5 en de eindes).
+> Volgende stap: nacht 4, nacht 5 en de eindes.
 
 Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, dan uitbreiden.** Elke stap is een klein "af" ding.
 

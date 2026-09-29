@@ -9,8 +9,8 @@ Maar elke nacht word je wakker met het gevoel dat er iets in je huis is. En elke
 
 ## Status
 
-**Speelbare demo:** dag 1 + nacht 1, dag 2 + nacht 2 (ongeveer 10–15 minuten).
-Nacht 3, 4 en 5 en de eindes komen nog.
+**Speelbare demo:** dag 1 t/m 3 en nacht 1 t/m 3 (ongeveer 20–25 minuten).
+Nacht 4 en 5 en de eindes komen nog.
 
 ## Spelen op Windows
 
@@ -44,7 +44,8 @@ Nacht 3, 4 en 5 en de eindes komen nog.
 
 Hiermee kan je snel testen zonder alles opnieuw te spelen:
 
-- **Springen** naar dag 1 of 2: ochtend, school, avond of nacht
+- **Springen** naar dag 1, 2 of 3: ochtend, school, avond of nacht
+- **Spiegel traag**: zet de vertraging van je spiegelbeeld aan/uit
 - **Info** aan/uit: FPS, dag, fase, verborgen stats, positie, kamer, batterij
 - **Noclip** (door muren vliegen, Spatie = omhoog, Ctrl = omlaag) en **snel lopen**
 - Lichten aan/uit, alle kasten open/dicht, TV op ruis, sfeer dag/nacht

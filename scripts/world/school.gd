@@ -26,6 +26,8 @@ var teacher: Node3D
 var figure: Node3D ## de gestalte "in je ooghoek"
 var starer: Node3D
 var board_label: Label3D
+var kids: Array[Node3D] = []
+var _lights: Array[OmniLight3D] = []
 
 
 func _ready() -> void:
@@ -78,6 +80,7 @@ func _build_room() -> void:
 		light.light_energy = 0.9
 		light.light_color = Color(1.0, 0.98, 0.92)
 		add_child(light)
+		_lights.append(light)
 	# posters
 	for px in [2.0, 6.0]:
 		Props.poster(self, Vector3(px, 1.4, D - 0.005), 180.0, Vector2(0.6, 0.8))
@@ -123,6 +126,7 @@ func _build_class() -> void:
 			if seat in EMPTY_SEATS:
 				continue
 			var kid := Props.person(self, "Kid_%d_%d" % [c, r], desk_pos + Vector3(0, 0, 0.5), 180.0, shirts[(c + r * 3) % shirts.size()], true, false, hairs[(c * 2 + r) % hairs.size()])
+			kids.append(kid)
 			if seat == STARER_SEAT:
 				starer = kid
 
@@ -160,6 +164,39 @@ func walk(person: Node3D, points: Array, speed := 1.1) -> void:
 func face(node: Node3D, world_point: Vector3) -> void:
 	var p := node.global_position
 	node.global_rotation.y = atan2(world_point.x - p.x, world_point.z - p.z)
+
+
+## Droom: de klas is ineens leeg en donker.
+func set_empty(empty: bool) -> void:
+	for k in kids:
+		k.visible = not empty
+	teacher.visible = not empty
+	for l in _lights:
+		l.light_energy = 0.15 if empty else 0.9
+	board_label.visible = not empty
+
+
+## Iedereen draait zijn hoofd naar dit punt (of terug naar voren).
+func everyone_look_at(point: Variant) -> void:
+	for k in kids:
+		var head: Node3D = k.get_node("Head")
+		if point == null:
+			head.rotation.y = 0.0
+		else:
+			face(head, point)
+
+
+## De gestalte naast een lege stoel zetten, kijkend naar `point`.
+func figure_at_seat(seat: Vector2i, point: Vector3) -> void:
+	figure.position = Vector3(COLUMNS[seat.x] + 0.45, 0, ROWS[seat.y] + 0.3)
+	figure.visible = true
+	face(figure, point)
+
+
+func reset_figure() -> void:
+	figure.position = Vector3(0.45, 0, 2.0)
+	figure.rotation_degrees.y = 31.0
+	figure.visible = false
 
 
 func player_seat_world() -> Vector3:

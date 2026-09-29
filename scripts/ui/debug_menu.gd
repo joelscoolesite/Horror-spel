@@ -38,7 +38,7 @@ func _ready() -> void:
 	_panel = ColorRect.new()
 	_panel.color = Color(0, 0, 0, 0.75)
 	_panel.position = Vector2(4, 4)
-	_panel.size = Vector2(318, 262)
+	_panel.size = Vector2(318, 266)
 	_panel.visible = false
 	root.add_child(_panel)
 	var title := Label.new()
@@ -56,7 +56,9 @@ func _ready() -> void:
 	var buttons := [
 		["D1 ochtend", _jump.bind(1, 0)], ["D1 school", _jump.bind(1, 1)], ["D1 avond", _jump.bind(1, 2)],
 		["D1 nacht", _jump.bind(1, 3)], ["D2 ochtend", _jump.bind(2, 0)], ["D2 school", _jump.bind(2, 1)],
-		["D2 avond", _jump.bind(2, 2)], ["D2 nacht", _jump.bind(2, 3)], ["Info aan/uit", _toggle_info],
+		["D2 avond", _jump.bind(2, 2)], ["D2 nacht", _jump.bind(2, 3)], ["D3 ochtend", _jump.bind(3, 0)],
+		["D3 school", _jump.bind(3, 1)], ["D3 avond", _jump.bind(3, 2)], ["D3 nacht", _jump.bind(3, 3)],
+		["Spiegel traag", _mirror_delay], ["Info aan/uit", _toggle_info],
 		["Noclip (vliegen)", _toggle_noclip], ["Snel lopen", _toggle_fast], ["Batterij vol", _full_battery],
 		["Lichten aan", _lights.bind(true)], ["Lichten uit", _lights.bind(false)], ["Kasten open", _closets.bind(true)],
 		["Kasten dicht", _closets.bind(false)], ["TV ruis", _tv.bind(TV.Mode.STATIC)], ["TV uit", _tv.bind(TV.Mode.OFF)],
@@ -125,6 +127,11 @@ func _jump(day: int, phase: int) -> void:
 	Sfx.set_muffled(false)
 	get_tree().paused = false
 	get_tree().reload_current_scene()
+
+
+func _mirror_delay() -> void:
+	var m: Mirror = Game.apartment.mirror
+	m.delay = 0.0 if m.delay > 0.0 else 0.45
 
 
 func _toggle_info() -> void:

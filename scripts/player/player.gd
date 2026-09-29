@@ -82,6 +82,8 @@ func _ready() -> void:
 	_camera.near = 0.03
 	_camera.far = 60.0
 	_camera.fov = 72.0
+	# laag 2 = het lichaam van het kind, dat alleen de spiegel ziet
+	_camera.cull_mask = 0xFFFFF & ~(1 << (Mirror.REFLECTION_LAYER - 1))
 	_head.add_child(_camera)
 	_camera.make_current()
 
@@ -153,6 +155,10 @@ func sit_at(head: Node3D) -> void:
 	lie_in_bed(head, head)
 	_pitch = -0.05
 	_look_limits = Vector4(-1.9, 1.9, -0.8, 0.6)
+
+
+func get_camera() -> Camera3D:
+	return _camera
 
 
 ## Waar je hand vandaan komt als je iets vastpakt (vlak voor de camera, onderin).

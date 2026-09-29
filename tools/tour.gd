@@ -99,6 +99,39 @@ func run() -> void:
 	Game.hud.set_objectives([["a", "Turn off the alarm"], ["b", "Make breakfast"]])
 	await _settle()
 	_shot("hud")
+	# spiegel (overdag en 's nachts)
+	ap.set_mood("morning")
+	Game.post.set_night(false)
+	player.set_flashlight(false)
+	ap.switch_for("bathroom").set_on(true)
+	_look(player, Vector3(6.2, 0, 2.6), ap.mirror.global_position)
+	await _settle()
+	_shot("mirror_day")
+	player.global_position = Vector3(6.3, 0, 1.9)
+	await _settle()
+	_shot("mirror_day_moved")
+	ap.set_mood("night")
+	Game.post.set_night(true)
+	player.set_flashlight(true)
+	_look(player, Vector3(6.2, 0, 2.4), ap.mirror.global_position)
+	await _settle()
+	_shot("mirror_night")
+	# pakketje
+	ap.package.visible = true
+	_look(player, Vector3(2.6, 0, 8.6), Vector3(2.6, 0.2, 9.9))
+	await _settle()
+	_shot("package")
+	# droom in de klas
+	ap.set_mood("school")
+	var sc: School = Game.school
+	sc.set_empty(true)
+	player.sit_at(sc.seat_marker)
+	player.allow_get_up = false
+	sc.figure_at_seat(Vector2i(2, 3), player.global_position)
+	player._yaw = -0.9
+	player._pitch = 0.1
+	await _settle()
+	_shot("school_dream")
 	print("TOUR KLAAR")
 	get_tree().quit()
 

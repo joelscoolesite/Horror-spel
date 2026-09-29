@@ -11,7 +11,7 @@ enum Phase { MENU, MORNING, SCHOOL, AFTERNOON, NIGHT }
 
 const LAST_DAY := 5
 ## Tot en met deze dag is de game nu speelbaar. Daarna komt "einde demo".
-const PLAYABLE_UNTIL_DAY := 2
+const PLAYABLE_UNTIL_DAY := 3
 const DAY_NAMES := ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
 ## De klok staat elke nacht later, alsof je steeds minder slaapt.
 const NIGHT_TIMES := ["00:13", "01:26", "02:39", "03:33", "03:33"]

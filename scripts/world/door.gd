@@ -1,8 +1,11 @@
 class_name Door
 extends Interactable
 ## Een deur of kastdeur die draait rond een scharnier.
+## Kamerdeuren:
 ##  - E: snel open/dicht (maakt veel lawaai!)
 ##  - Linkermuisknop vasthouden + muis naar beneden: langzaam opentrekken.
+## Kasten 's nachts:
+##  - E: je hand gaat op de kast... je wacht... en dan trek je hem open.
 ## De node zelf staat op de plek van het scharnier.
 
 signal opened ## als de deur ver genoeg open is om erin te kijken
@@ -25,13 +28,20 @@ var _creak: AudioStreamPlayer3D
 var _target := -1.0
 var _last_angle := 0.0
 var _creak_level := 0.0
+var _body: AnimatableBody3D
+var _grabbing := false
+
+## Hoe lang je hand op de kast ligt voor je hem opentrekt (seconden).
+const GRAB_TIME := 2.0
 
 
 func build() -> void:
 	_pivot = Node3D.new()
 	add_child(_pivot)
 	var body := AnimatableBody3D.new()
-	body.collision_layer = Build.LAYER_WORLD | Build.LAYER_INTERACT
+	_body = body
+	# Kastdeuren botsen niet met de speler (anders kan hij je wegduwen).
+	body.collision_layer = Build.LAYER_INTERACT if is_closet else (Build.LAYER_WORLD | Build.LAYER_INTERACT)
 	body.sync_to_physics = false
 	body.position = Vector3(width * 0.5, height * 0.5, 0)
 	_pivot.add_child(body)
@@ -62,12 +72,18 @@ func build() -> void:
 
 
 func get_prompt() -> String:
+	if _grabbing:
+		return ""
 	if angle > 30.0:
 		return "[E] Close"
+	if is_closet:
+		return "[E] Open"
 	return "[E] Open   [Hold LMB] Pull slowly"
 
 
-func interact(_player: Node) -> void:
+func interact(player: Node) -> void:
+	if _grabbing:
+		return
 	if locked:
 		Sfx.play_at("door_close", global_position, -12.0, 1.6)
 		if Game.hud:
@@ -75,13 +91,56 @@ func interact(_player: Node) -> void:
 		return
 	if angle > 30.0:
 		_target = 0.0
+	elif is_closet and Game.is_night():
+		_grab_and_open(player)
 	else:
 		_target = max_angle
 		Sfx.play_at("creak_fast", _creak.global_position, -2.0, randf_range(0.9, 1.1))
 
 
 func can_drag() -> bool:
-	return not locked
+	return not locked and not is_closet
+
+
+## 's Nachts: hand op de kast, even wachten, en dan... opentrekken.
+func _grab_and_open(player: Player) -> void:
+	_grabbing = true
+	_target = -1.0
+	player.locked = true
+	player.gripping = true
+	var hand := Props.hand(_body)
+	var fingers: Node3D = hand.get_node("Fingers")
+	# plek van de klink (voorkant van de kast is +z)
+	var handle := Vector3(width * 0.5 - 0.1, 0.02, thickness * 0.5 + 0.045)
+	hand.global_basis = _body.global_basis
+	hand.global_position = player.hand_start_position()
+	var reach := create_tween()
+	reach.tween_property(hand, "position", handle, 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await reach.finished
+	Sfx.play_at("pickup", hand.global_position, -12.0, 1.3)
+	# vingers om de klink heen
+	var curl := create_tween()
+	curl.tween_property(fingers, "rotation_degrees:x", -70.0, 0.35)
+	# ...en wachten. Hand trilt een beetje.
+	var t := 0.0
+	while t < GRAB_TIME:
+		await get_tree().process_frame
+		var dt := get_process_delta_time()
+		t += dt
+		var shake := 0.0015 + t * 0.0015
+		hand.position = handle + Vector3(randf_range(-shake, shake), randf_range(-shake, shake), 0)
+	hand.position = handle
+	# TREK!
+	_target = max_angle
+	Sfx.play_at("creak_fast", _creak.global_position, 0.0, randf_range(0.9, 1.1))
+	await get_tree().create_timer(0.45).timeout
+	player.gripping = false
+	var away := create_tween()
+	away.tween_property(hand, "position", handle + Vector3(0, -0.3, 0.4), 0.3)
+	await away.finished
+	hand.queue_free()
+	player.locked = false
+	_grabbing = false
 
 
 func drag_begin() -> void:

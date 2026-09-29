@@ -19,6 +19,9 @@ uniform vec2 uv_offset = vec2(0.0);
 uniform bool world_uv = false;
 uniform vec3 emission_color : source_color = vec3(0.0);
 uniform float emission_energy = 0.0;
+// > 0 = iets naar de camera toe duwen (in meters), zodat platte dingen op een
+// muur of vloer (poster, tapijt) niet gaan flikkeren (z-fighting).
+uniform float depth_bias = 0.0;
 
 varying vec3 affine_uv;
 
@@ -40,7 +43,9 @@ void vertex() {
 	}
 	UV = uv * uv_scale + uv_offset;
 
-	vec4 clip = PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
+	vec4 view = MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
+	view.xyz -= normalize(view.xyz) * depth_bias;
+	vec4 clip = PROJECTION_MATRIX * view;
 	vec2 grid = vec2(ps1_snap, ps1_snap * 0.5625);
 	if (clip.w > 0.0) {
 		clip.xy = round(clip.xy / clip.w * grid) / grid * clip.w;

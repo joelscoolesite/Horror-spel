@@ -76,18 +76,6 @@ func _ready() -> void:
 	_battery_bar.size = Vector2(22, 6)
 	_battery_bg.add_child(_battery_bar)
 
-	_choice = ColorRect.new()
-	_choice.color = Color(0, 0, 0, 0.8)
-	_choice.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_choice.visible = false
-	_root.add_child(_choice)
-	_choice_label = _label(HORIZONTAL_ALIGNMENT_LEFT, Color(0.95, 0.95, 0.9), _choice)
-	_choice_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_choice_label.offset_left = 70
-	_choice_label.offset_right = -70
-	_choice_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_choice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
 	_fade = ColorRect.new()
 	_fade.color = Color(0, 0, 0, 1)
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -102,6 +90,19 @@ func _ready() -> void:
 	_card.offset_right = -50
 	_card.add_theme_font_size_override("font_size", 12)
 	_card.modulate.a = 0.0
+
+	# Keuzes komen BOVEN het zwarte scherm (anders zie je ze niet als het beeld zwart is)
+	_choice = ColorRect.new()
+	_choice.color = Color(0, 0, 0, 0.8)
+	_choice.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_choice.visible = false
+	_root.add_child(_choice)
+	_choice_label = _label(HORIZONTAL_ALIGNMENT_LEFT, Color(0.95, 0.95, 0.9), _choice)
+	_choice_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_choice_label.offset_left = 70
+	_choice_label.offset_right = -70
+	_choice_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_choice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 	_build_pause_menu()
 
@@ -311,7 +312,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		_toggle_pause()
 	# Muis "kwijt" (bijv. na alt-tab)? Klik in het venster om hem terug te pakken.
-	elif event is InputEventMouseButton and event.pressed and not get_tree().paused:
+	elif event is InputEventMouseButton and event.pressed and not get_tree().paused and not Game.debug_open:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 

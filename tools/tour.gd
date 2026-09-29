@@ -49,6 +49,52 @@ func run() -> void:
 	player._pitch = -0.2
 	await _settle()
 	_shot("morning_in_bed_clock")
+	# school
+	ap.set_mood("school")
+	Game.post.set_night(false)
+	var school: School = Game.school
+	school.board_label.text = "MATH  -  p. 42"
+	school.figure.visible = true
+	player.sit_at(school.seat_marker)
+	await _settle()
+	_shot("school_seat")
+	var to_fig := school.figure.global_position + Vector3(0, 1.3, 0) - player._camera.global_position
+	player._yaw = atan2(-to_fig.x, -to_fig.z) - player._lie_yaw
+	player._pitch = 0.1
+	await _settle()
+	_shot("school_figure")
+
+	player._yaw = -0.5
+	player._pitch = -0.2
+	await _settle()
+	_shot("school_look_right")
+	school.face(school.starer.get_node("Head"), player.global_position)
+	player._yaw = -0.35
+	player._pitch = -0.25
+	await _settle()
+	_shot("school_starer")
+	# hand op de kast (nacht)
+	ap.set_mood("night")
+	Game.post.set_night(true)
+	Game.phase = Game.Phase.NIGHT
+	ap.closets[0].reset_closed()
+	_look(player, Vector3(3.0, 0, 1.0), Vector3(3.9, 1.0, 1.0))
+	player.set_flashlight(true)
+	await _settle()
+	ap.closets[0].interact(player)
+	for i in 70:
+		await get_tree().process_frame
+	_shot("night_hand_grab")
+	for i in 120:
+		await get_tree().process_frame
+	_shot("night_hand_opened")
+	Game.phase = Game.Phase.MENU
+	# debug-menu
+	var dbg = get_parent().get_node("DebugMenu")
+	dbg._set_open(true)
+	await _settle()
+	_shot("debug_menu")
+	dbg._set_open(false)
 	Game.hud.say("Something is inside my house.", 5.0)
 	Game.hud.set_objectives([["a", "Turn off the alarm"], ["b", "Make breakfast"]])
 	await _settle()

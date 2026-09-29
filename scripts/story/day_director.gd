@@ -92,49 +92,134 @@ func _on_morning_task(id: String, day: int) -> void:
 
 
 # ================================================================== SCHOOL
+# Een korte cutscene: je zit in de klas en kan rondkijken, maar niet lopen.
+
+var school: School:
+	get: return Game.school
+
 
 func run_school(day: int) -> void:
 	Game.phase = Game.Phase.SCHOOL
+	ap.set_mood("school")
+	Game.post.set_night(false)
+	player.night_mode = false
+	player.can_hide = false
+	player.allow_get_up = false
+	player.fear = 0.0
+	player.sit_at(school.seat_marker)
 	player.locked = true
-	var murmur: AudioStreamPlayer = Sfx.loop("murmur", -14.0, "Ambience", self)
+	school.board_label.text = "MATH  -  p. %d" % (41 + day)
+	school.teacher.position = Vector3(4.6, 0, 0.8)
+	school.teacher.rotation.y = 0.0
+	school.figure.visible = false
+	if school.starer:
+		school.starer.get_node("Head").rotation.y = 0.0
+
+	var murmur: AudioStreamPlayer = Sfx.loop("murmur", -16.0, "Ambience", self)
+	await hud.title_card(["School."], 1.5)
 	Sfx.play("school_bell", -10.0)
+	await hud.fade_in(1.5)
+	player.locked = false
+
 	match day:
 		1:
-			await hud.title_card([
-				"School.",
-				"Math. Dutch. More math.",
-				"You can barely keep your eyes open.",
-				"Something moves in the corner of your eye.",
-				"When you look, there is nothing there.",
-			])
+			await _school_day_1()
 		2:
-			await hud.title_card([
-				"School.",
-				"Everything feels slower today.",
-				"The teacher keeps looking at you.",
-			])
-			var pick: int = await hud.choose("\"Hey. Are you okay? You look really tired.\"", [
-				"\"I'm fine.\"",
-				"\"I haven't been sleeping well.\"",
-			])
-			if pick == 1:
-				Game.help += 1
-				Game.flags["told_teacher"] = true
-				await hud.title_card(["\"Thanks for telling me.\nMy door is always open, okay?\""], 3.0)
-			else:
-				await hud.title_card(["\"...Alright.\""], 2.0)
-			await hud.title_card([
-				"A classmate is staring at you.",
-				"You blink. They're looking at the board.",
-			])
+			await _school_day_2(murmur)
 		_:
-			await hud.title_card(["School."])
+			await Game.wait(3.0)
+
 	if Game.flags.get("forgot_lunch_%d" % day, false):
-		await hud.title_card(["You forgot your lunch." if day == 1 else "You forgot your lunch. Again."])
+		Sfx.play("school_bell", -10.0)
+		await hud.say_wait("Lunch break." if day == 1 else "Lunch break. Again.", 2.0)
+		await hud.say_wait("You forgot your lunch." if day == 1 else "You forgot your lunch. Again.", 2.5)
+
+	await Game.wait(1.0)
+	Sfx.play("school_bell", -8.0)
+	player.locked = true
 	var t := create_tween()
-	t.tween_property(murmur, "volume_db", -60.0, 1.0)
-	await t.finished
+	t.tween_property(murmur, "volume_db", -60.0, 1.5)
+	await hud.fade_out(1.5)
 	murmur.queue_free()
+	Game.post.set_param("distortion", 0.0)
+	school.figure.visible = false
+
+
+func _teacher(text: String, seconds := 3.0) -> void:
+	await hud.say_wait("Teacher: " + text, seconds)
+
+
+func _school_day_1() -> void:
+	await _teacher("\"Okay everyone. Page 42.\"")
+	await hud.say_wait("Math. Dutch. More math.", 2.5)
+	# ogen vallen dicht...
+	hud.say("You can barely keep your eyes open.", 4.0)
+	for i in 2:
+		await hud.fade_out(1.2)
+		await Game.wait(0.4)
+		await hud.fade_in(0.3)
+		await Game.wait(1.0)
+	# iets in je ooghoek
+	school.figure.visible = true
+	await Game.wait(1.0)
+	player.fear = 0.4
+	hud.say("Something moves in the corner of your eye.", 4.0)
+	var waited := 0.0
+	while waited < 10.0:
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+		if player.is_looking_at(school.figure.global_position + Vector3(0, 1.2, 0), 16.0):
+			break
+	# zodra je kijkt: weg
+	school.figure.visible = false
+	Game.post.jolt(0.35)
+	player.fear = 0.15
+	await Game.wait(0.8)
+	await hud.say_wait("When you look, there is nothing there.", 3.0)
+	player.fear = 0.0
+
+
+func _school_day_2(murmur: AudioStreamPlayer) -> void:
+	murmur.pitch_scale = 0.8
+	Game.post.tween_param("distortion", 0.12, 3.0)
+	await hud.say_wait("Everything feels slower today.", 3.0)
+	# de leraar kijkt steeds naar je
+	school.face(school.teacher, player.global_position)
+	await hud.say_wait("The teacher keeps looking at you.", 3.0)
+	await Game.wait(1.0)
+	# ...en loopt naar je toe
+	await school.walk(school.teacher, [Vector3(4.0, 0, 1.8), Vector3(4.0, 0, 6.0)])
+	school.face(school.teacher, player.global_position)
+	await Game.wait(0.6)
+	var pick: int = await hud.choose("Teacher: \"Hey. Are you okay? You look really tired.\"", [
+		"\"I'm fine.\"",
+		"\"I haven't been sleeping well.\"",
+	])
+	if pick == 1:
+		Game.help += 1
+		Game.flags["told_teacher"] = true
+		await _teacher("\"Thanks for telling me. My door is always open, okay?\"", 3.5)
+	else:
+		await _teacher("\"...Alright.\"", 2.0)
+	await school.walk(school.teacher, [Vector3(4.0, 0, 1.8), Vector3(4.6, 0, 0.8)])
+	school.teacher.rotation.y = 0.0
+	await Game.wait(1.0)
+	# een klasgenoot draait zich om en staart
+	var head: Node3D = school.starer.get_node("Head")
+	school.face(head, player.global_position)
+	player.fear = 0.35
+	hud.say("A classmate is staring at you.", 4.0)
+	var waited := 0.0
+	while waited < 6.0 and not player.is_looking_at(head.global_position, 12.0):
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+	await Game.wait(1.5)
+	await hud.fade_out(0.12)
+	head.rotation.y = 0.0
+	await hud.fade_in(0.12)
+	player.fear = 0.0
+	await hud.say_wait("You blink. They're looking at the board.", 3.0)
+	Game.post.tween_param("distortion", 0.0, 2.0)
 
 
 # ================================================================== MIDDAG / AVOND

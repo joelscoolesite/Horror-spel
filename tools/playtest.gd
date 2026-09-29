@@ -25,6 +25,8 @@ func _process(delta: float) -> void:
 	var player: Player = Game.player
 	if hud == null or ap == null or player == null:
 		return
+	if player.global_position.y < -1.0:
+		print("[bot] FOUT: speler valt door de vloer! ", player.global_position)
 	if Game.phase != _last_phase:
 		_last_phase = Game.phase
 		print("[bot] dag %d, fase %s  (uitputting=%d, hulp=%d)" % [Game.day, Game.Phase.keys()[Game.phase], Game.exhaustion, Game.help])
@@ -38,6 +40,8 @@ func _process(delta: float) -> void:
 	_cooldown = 0.4
 
 	if hud._choice.visible:
+		if hud._choice.get_index() < hud._fade.get_index():
+			print("[bot] FOUT: keuze zit onder het zwarte scherm!")
 		var text: String = hud._choice_label.text
 		if text.contains("[E]  Close"):
 			print("[bot]   (pagina gelezen)")
@@ -87,9 +91,9 @@ func _process(delta: float) -> void:
 			player.stopped_walking.emit()
 			for c in ap.closets:
 				if not c.was_opened:
-					print("[bot]   kast open: ", c.get_parent().name)
-					c.set_angle(100.0)
-					_cooldown = 1.5
+					print("[bot]   kast open (hand erop): ", c.get_parent().name)
+					c.interact(player)
+					_cooldown = 1.0
 					return
 			if ap.spots.bed.active:
 				print("[bot]   terug naar bed")

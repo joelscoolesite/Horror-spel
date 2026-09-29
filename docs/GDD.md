@@ -91,7 +91,12 @@ OCHTEND ──► SCHOOL ──► MIDDAG/AVOND ──► SLAPEN ──► NACHT
 
 In de nacht loopt het kind **langzaam**. Er is geen rennen tot de laatste nacht.
 
-### Kasten en deuren langzaam openen
+### Kasten openen ('s nachts)
+- Je drukt op `E`. Je hand gaat op de kastdeur, je vingers pakken de klink.
+- Ongeveer 2 seconden gebeurt er niks: je hart bonkt, het beeld zoomt in en trilt.
+- Dan trek je hem in één keer open.
+
+### Kamerdeuren langzaam openen
 - Je pakt de deur vast (linkermuisknop ingedrukt houden) en **sleept met de muis** om hem open te trekken, zoals in *Amnesia*.
 - Hoe langzamer je hem opentrekt, hoe stiller hij gaat. Snel trekken = piepend geluid.
 - Tijdens het vasthouden: hartslaggeluid wordt luider, beeld gaat een beetje trillen ("grip versterken"-gevoel).
@@ -341,7 +346,7 @@ Omdat je nog nooit Godot hebt gebruikt: **eerst iets heel kleins laten werken, d
 
 ### Fase 6 — De dag
 - [x] Ochtend: brood smeren, lunch (optioneel).
-- [x] School-scène (voor nu alleen tekst op zwart, nog geen 3D-klaslokaal).
+- [x] School-scène: 3D-klaslokaal met klasgenoten, een leraar die naar je toe loopt, en een gestalte in je ooghoek.
 - [x] Middag: TV-game, Amazin, nieuws, lichten uit.
 
 ### Fase 7 — Nacht 3, 4, 5 + eindes

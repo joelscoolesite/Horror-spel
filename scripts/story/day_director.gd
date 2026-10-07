@@ -49,7 +49,7 @@ func run_morning(day: int) -> void:
 	elif day == 4:
 		_clock_glitch()
 	elif day >= 5:
-		ap.strange_chair.visible = true
+		ap.set_strange_chair(true)
 		await Game.wait(1.5)
 		hud.say("There's a chair in the corner of your room.\nYou don't own that chair.", 4.5)
 
@@ -360,7 +360,7 @@ func run_afternoon(day: int) -> void:
 	ap.reset_for(false)
 	ap.set_mood("evening")
 	ap.set_clock("20:41")
-	ap.strange_chair.visible = day >= 5
+	ap.set_strange_chair(day >= 5)
 	player.place_at(ap.markers.bed_side if day >= 6 else ap.markers.front_door_in)
 	player.locked = false
 	await hud.fade_in(1.2)

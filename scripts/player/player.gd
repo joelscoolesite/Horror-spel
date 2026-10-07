@@ -69,7 +69,7 @@ func _ready() -> void:
 	collision_mask = Build.LAYER_WORLD
 	var shape := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.22
+	capsule.radius = 0.19
 	capsule.height = 1.5
 	shape.shape = capsule
 	shape.position.y = 0.75

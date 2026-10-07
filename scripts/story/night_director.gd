@@ -100,7 +100,7 @@ func _setup_night(day: int) -> void:
 	hud.clear_objectives()
 	if day == 3:
 		ap.closets[3].set_angle(25.0) # de gangkast staat op een kier...
-	ap.strange_chair.visible = day >= 5
+	ap.set_strange_chair(day >= 5)
 	hud.set_phone_hint("")
 	await hud.fade_in(3.0)
 

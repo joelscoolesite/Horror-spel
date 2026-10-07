@@ -198,6 +198,13 @@ func set_long_hall(on: bool) -> void:
 		box.get_child(0).collision_layer = 0 if on else Build.LAYER_WORLD
 
 
+## De vreemde stoel (dag 5+). Onzichtbaar = ook niet botsen!
+func set_strange_chair(on: bool) -> void:
+	strange_chair.visible = on
+	for c in strange_chair.find_children("*", "StaticBody3D", true, false):
+		c.collision_layer = Build.LAYER_WORLD if on else 0
+
+
 func set_fridge_open(on: bool) -> void:
 	_fridge_open.visible = on
 
@@ -496,8 +503,8 @@ func _build_bedroom() -> void:
 
 	_room_light("bedroom", Vector3(2.25, 0, 2.0), 5.0, Vector3(3.0, 1.2, 3.92), 180.0)
 	# een stoel in de hoek, gericht op je bed. Die is niet van jou. (dag 5+)
-	strange_chair = Props.chair(self, Vector3(3.7, 0, 3.2), -135.0, Build.mat("wood_dark"))
-	strange_chair.visible = false
+	strange_chair = Props.chair(self, Vector3(4.1, 0, 2.55), -115.0, Build.mat("wood_dark"))
+	set_strange_chair(false)
 	# de schaduw-gestalte (hergebruikt in nacht 4 en 5)
 	shadow = Creature.new()
 	shadow.name = "Shadow"

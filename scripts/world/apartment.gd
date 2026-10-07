@@ -41,6 +41,7 @@ var extension: Node3D ## de gang die langer is dan hij hoort (nacht 4)
 var copy_door: Door
 var sleeper_head: Node3D ## iemand in jouw bed... (nacht 4)
 var shadow: Creature ## het monster, dat de regie overal kan neerzetten
+var peeker: Creature ## nog een keer het monster: gluurt om deurposten en hangt aan plafonds
 var strange_chair: Node3D ## een stoel die niet van jou is (dag 5+)
 var long_hall := false
 var stalker: Stalker ## het wezen (nacht 6)
@@ -178,6 +179,8 @@ func reset_for(night: bool) -> void:
 	set_fridge_open(false)
 	tv.set_message("")
 	shadow.visible = false
+	peeker.visible = false
+	peeker.set_on_ceiling(false)
 	stalker.despawn()
 	sleeper_head.rotation = Vector3.ZERO
 	copy_door.reset_closed()
@@ -211,6 +214,8 @@ func set_fridge_open(on: bool) -> void:
 
 ## Zet de schaduw-gestalte ergens neer, kijkend naar `look_at_pos`.
 func show_shadow(pos: Vector3, look_at_pos: Vector3) -> void:
+	shadow.set_on_ceiling(false)
+	shadow.mode = Creature.Mode.IDLE
 	shadow.global_position = pos
 	shadow.global_rotation.y = atan2(look_at_pos.x - pos.x, look_at_pos.z - pos.z)
 	shadow.visible = true
@@ -509,6 +514,10 @@ func _build_bedroom() -> void:
 	shadow = Creature.new()
 	shadow.name = "Shadow"
 	add_child(shadow)
+	peeker = Creature.new()
+	peeker.name = "Peeker"
+	add_child(peeker)
+	peeker.visible = false
 	shadow.visible = false
 	_marker("bed_head", Vector3(0.65, 0.62, 0.42), Vector3(0.65, 0.9, 3.0))
 	_marker("bed_side", Vector3(1.6, 0, 1.4), Vector3(3.5, 0, 4.0))

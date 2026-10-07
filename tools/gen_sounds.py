@@ -348,6 +348,17 @@ def scream():
     save("scream", x, 0.98)
 
 
+def drone():
+    """Laag, dreigend gebrom voor de nacht (loop). Wordt elke nacht harder."""
+    sec = 8.0
+    tt = t(sec)
+    x = sum(np.sin(2 * np.pi * f * tt + np.sin(2 * np.pi * 0.11 * tt * (i + 1)) * 2) * a
+            for i, (f, a) in enumerate([(41.0, 1.0), (41.6, 0.8), (61.7, 0.5), (82.3, 0.35), (123.8, 0.15)]))
+    swell = 0.6 + 0.4 * np.sin(2 * np.pi * tt / sec) ** 2
+    hiss = bandpass(white(sec), 300, 1400) * 0.12 * (0.5 + 0.5 * np.sin(2 * np.pi * tt / 4.0) ** 2)
+    save("drone", crossfade_loop((x * swell + hiss), 0.5), 0.6)
+
+
 def ui_click():
     n = int(0.05 * SR)
     save("ui_click", np.sin(2 * np.pi * 1200 * t(0.05)) * env(n, 0.001, 80), 0.4)
@@ -386,4 +397,5 @@ if __name__ == "__main__":
     creature_breath()
     clicks()
     scream()
+    drone()
     print("Klaar!")

@@ -419,3 +419,4 @@ func _update_heartbeat(delta: float) -> void:
 	_heartbeat.pitch_scale = 1.0 + level * 0.35
 	if Game.post:
 		Game.post.set_listening(listening)
+		Game.post.set_fear(level if night_mode else 0.0)

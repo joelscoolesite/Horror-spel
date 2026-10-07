@@ -24,6 +24,19 @@ var _outcome := "" ## nacht 6: "caught", "morning", "check" of "awake"
 var _bed_hunt_running := false
 var _copy_done := false
 var _quiet_closets := false ## geen "Nothing." als er juist WEL iets in zit
+var _drone: AudioStreamPlayer
+
+## Plekken waar het monster om een deurpost kan gluren:
+## [positie (x, z), draaiing, leun-kant, kamer waar het in kijkt]
+const PEEK_SPOTS := [
+	[Vector2(4.6, 4.45), 180.0, -1.0, "bedroom"],
+	[Vector2(6.6, 4.45), 180.0, -1.0, "bathroom"],
+	[Vector2(8.7, 4.45), 180.0, -1.0, "parent"],
+	[Vector2(4.4, 5.15), 0.0, 1.0, "living"],
+	[Vector2(11.75, 5.15), 0.0, 1.0, "kitchen"],
+	[Vector2(4.35, 5.9), 180.0, -1.0, "hall"],
+	[Vector2(11.75, 5.9), 180.0, -1.0, "hall"],
+]
 
 
 ## Speelt een nacht. Geeft een einde terug ("morning", "check", "awake") of "" (gewoon verder).
@@ -53,9 +66,12 @@ func run_night(day: int) -> String:
 		player.set_hiding(false)
 		await Game.wait(1.0)
 		_token += 1
+		_set_drone(false, day)
 		return ""
 
 	Game.closet_opened.connect(_on_closet_opened)
+	if day >= 3:
+		_peeks(_token)
 	match day:
 		1:
 			await _night_1()
@@ -77,6 +93,7 @@ func run_night(day: int) -> String:
 	if day == 4:
 		await _doorway_figure()
 	await _go_to_sleep()
+	_set_drone(false, day)
 	return ""
 
 
@@ -102,6 +119,7 @@ func _setup_night(day: int) -> void:
 		ap.closets[3].set_angle(25.0) # de gangkast staat op een kier...
 	ap.set_strange_chair(day >= 5)
 	hud.set_phone_hint("")
+	_set_drone(true, day)
 	await hud.fade_in(3.0)
 
 
@@ -471,6 +489,7 @@ func _night_4() -> void:
 	_closet_nudges(token)
 	_long_hall_comment(token)
 	_copy_room_event(token)
+	_ceiling_crawler(token)
 	await Game.wait(1.0)
 	hud.say("It's 03:33. Again.", 3.0)
 	# pas naar bed na de kopie-kamer (of na 3 minuten)
@@ -717,6 +736,7 @@ func _night_6() -> String:
 	while true:
 		var result: String = await _night_6_attempt()
 		if result != "caught":
+			_set_drone(false, 6)
 			return result
 		await _caught_sequence()
 		_token += 1
@@ -858,10 +878,13 @@ func _jumpscare(root: Node3D, creature: Creature, dist := 0.4, lunge := false) -
 	fwd = fwd.normalized()
 	root.visible = true
 	creature.still = false
+	creature.set_on_ceiling(false)
+	creature.mode = Creature.Mode.LUNGE
+	creature.snap_pose()
 	root.global_rotation.y = atan2(-fwd.x, -fwd.z) # gezicht naar jou toe
 	var target := root.global_position + (cam.global_position + fwd * dist) - creature.head_position()
 	creature.scream()
-	Game.post.jolt(1.6)
+	Game.post.jolt(0.7)
 	player.gripping = true # beeld schudt en zoomt in
 	if lunge:
 		var t := create_tween()
@@ -872,6 +895,7 @@ func _jumpscare(root: Node3D, creature: Creature, dist := 0.4, lunge := false) -
 		root.global_position = target
 		await Game.wait(0.75)
 	player.gripping = false
+	creature.mode = Creature.Mode.IDLE
 
 
 func _caught_sequence() -> void:
@@ -933,3 +957,129 @@ func play_ending(ending: String) -> void:
 			await hud.title_card(["ENDING 3 / 3\n\nAWAKE"], 3.5)
 	player.set_hiding(false)
 	Sfx.set_muffled(false)
+
+
+# ================================================================== SFEER
+
+## Laag, dreigend gebrom. Elke nacht een beetje harder.
+func _set_drone(on: bool, day: int) -> void:
+	if on:
+		if _drone == null:
+			_drone = Sfx.loop("drone", -80.0, "Ambience", self)
+		var t := create_tween()
+		t.tween_property(_drone, "volume_db", -34.0 + day * 3.5, 4.0)
+	elif _drone:
+		var d := _drone
+		_drone = null
+		var t := create_tween()
+		t.tween_property(d, "volume_db", -60.0, 2.0)
+		t.tween_callback(d.queue_free)
+
+
+# ================================================================== GLUREN
+# Af en toe kijkt het monster om een deurpost naar je. Kijk je terug... weg.
+
+func _peeks(token: int) -> void:
+	await Game.wait(randf_range(25.0, 40.0))
+	while _alive(token):
+		if _still_awake() and not ap.shadow.visible and not ap.peeker.visible:
+			var spot = _pick_peek_spot()
+			if spot != null:
+				await _peek(spot, token)
+		await Game.wait(randf_range(25.0, 45.0))
+
+
+func _pick_peek_spot() -> Variant:
+	var room: String = ap.room_at(player.global_position)
+	var options := []
+	for spot in PEEK_SPOTS:
+		if spot[3] != room:
+			continue
+		var p: Vector2 = spot[0]
+		var head := Vector3(p.x, 1.6, p.y)
+		var d := head.distance_to(player.global_position)
+		# niet recht voor je neus: het moet "ineens" in je ooghoek staan
+		if d > 1.8 and d < 8.0 and not player.is_looking_at(head, 30.0):
+			options.append(spot)
+	return options.pick_random() if not options.is_empty() else null
+
+
+func _peek(spot: Array, token: int) -> void:
+	var c := ap.peeker
+	var p: Vector2 = spot[0]
+	c.set_on_ceiling(false)
+	c.mode = Creature.Mode.PEEK
+	c.peek_side = spot[2]
+	c.track_player = false
+	c.global_position = Vector3(p.x, 0, p.y)
+	c.global_rotation.y = deg_to_rad(spot[1])
+	c.snap_pose()
+	c.visible = true
+	Sfx.play_at("clicks", c.head_position(), -6.0, 0.9)
+	var seen := 0.0
+	var t := 0.0
+	while t < 9.0 and _alive(token):
+		await get_tree().process_frame
+		var dt := get_process_delta_time()
+		t += dt
+		seen = seen + dt if _can_see(c.head_position()) else 0.0
+		if seen > 0.2:
+			break
+	if seen > 0.2:
+		# betrapt: schiet terug achter de muur
+		Sfx.play_at("breath", c.head_position(), 0.0, 1.3)
+		Game.post.jolt(0.35)
+		player.fear = maxf(player.fear, 0.8)
+		var away := c.global_position + c.global_basis.x * (0.8 * c.peek_side)
+		var tw := create_tween()
+		tw.tween_property(c, "global_position", away, 0.12)
+		await tw.finished
+		hud.say(["...", "Was that...", "Something was there.", "It was looking at me."].pick_random(), 2.5)
+	c.visible = false
+	c.mode = Creature.Mode.IDLE
+	c.track_player = true
+
+
+## Kan de speler dit punt zien? (in beeld + geen muur ertussen)
+func _can_see(point: Vector3) -> bool:
+	if player.state != Player.State.WALK or not player.is_looking_at(point, 14.0):
+		return false
+	var cam := player.get_camera()
+	var q := PhysicsRayQueryParameters3D.create(cam.global_position, point, Build.LAYER_WORLD)
+	q.exclude = [player.get_rid()]
+	return get_viewport().get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+## Nacht 4: in de lange gang hangt het aan het plafond. Kijk omhoog...
+func _ceiling_crawler(token: int) -> void:
+	if not await _wait_until(func(): return ap.long_hall and player.global_position.x > 12.3, 900.0) or not _alive(token):
+		return
+	var c := ap.peeker
+	c.set_on_ceiling(true, 2.6)
+	c.track_player = true
+	c.owl_neck = true
+	c.global_position = Vector3(15.8, 2.6, 4.75)
+	c.global_rotation.y = deg_to_rad(-90.0) # kop naar jou toe
+	c.walk_speed = 0.0
+	c.snap_pose()
+	c.visible = true
+	Sfx.play_at("clicks", Vector3(15.8, 2.3, 4.75), 0.0, 0.8)
+	# wacht tot je hem ziet (of tot je er bijna onder staat)
+	await _wait_until(func(): return _can_see(c.head_position()) or player.global_position.x > 14.6, 25.0)
+	if not _alive(token):
+		c.visible = false
+		return
+	player.fear = 1.0
+	Sfx.play("stinger", -4.0)
+	Game.post.jolt(0.8)
+	hud.say("On the ceiling...", 2.0)
+	await Game.wait(0.6)
+	# het schiet weg over het plafond, de gang in
+	c.walk_speed = 3.0
+	var tw := create_tween()
+	tw.tween_property(c, "global_position", Vector3(19.5, 2.6, 4.75), 0.9)
+	await tw.finished
+	c.visible = false
+	c.set_on_ceiling(false)
+	c.walk_speed = 0.0
+	c.owl_neck = false

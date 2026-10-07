@@ -44,6 +44,7 @@ func _ready() -> void:
 	body = Creature.new()
 	body.name = "Body"
 	body.menace = 0.8
+	body.owl_neck = true # hoofd draait helemaal om als je achter hem staat
 	add_child(body)
 	visible = false
 	for n in NODES:
@@ -132,14 +133,21 @@ func _move(delta: float) -> void:
 	if _path.is_empty():
 		body.walk_speed = 0.0
 		return
-	body.walk_speed = speed
+	# ver weg: snel kruipend op handen en voeten. Dichtbij: staand, langzaam.
+	var far := global_position.distance_to(Game.player.global_position) > 4.5
+	if far and body.mode != Creature.Mode.CRAWL:
+		body.mode = Creature.Mode.CRAWL
+	elif not far and body.mode == Creature.Mode.CRAWL:
+		body.mode = Creature.Mode.IDLE
+	var spd := speed * (1.6 if far else 1.0)
+	body.walk_speed = spd
 	var target: Vector2 = _path[0]
 	var pos := Vector2(global_position.x, global_position.z)
 	var to := target - pos
 	if to.length() < 0.15:
 		_path.pop_front()
 		return
-	var step := minf(speed * delta, to.length())
+	var step := minf(spd * delta, to.length())
 	pos += to.normalized() * step
 	global_position = Vector3(pos.x, 0, pos.y)
 	global_rotation.y = atan2(to.x, to.y)

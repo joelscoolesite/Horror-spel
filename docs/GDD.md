@@ -237,6 +237,17 @@ De klok staat elke nacht later, alsof je steeds minder slaapt 💡:
 
 ---
 
+### Het monster
+- Lang, mager en bleek, met ribben, armen tot onder de knieën, gloeiende pupillen en een ingescheurde grijns.
+- Beweegt in **stop-motion** (12 beelden per seconde): net niet vloeiend, en daardoor eng.
+- Poses: staan, lopen, **kruipen op handen en voeten** (hoofd ondersteboven), **aan het plafond hangen**, **om een deurpost gluren**, **naar je grijpen**.
+- Nacht 3–5: af en toe **gluurt** het om een deurpost. Kijk je terug, dan schiet het weg.
+- Nacht 4: in de lange gang hangt het **aan het plafond**.
+- Nacht 6: ver weg **kruipt** het snel. Dichtbij staat het op. Het hoofd draait helemaal om als je achter hem staat.
+- Hoe dichter bij jou, hoe meer **ruis en kleurranden** in beeld. 's Nachts klinkt een laag gebrom dat elke nacht harder wordt.
+
+---
+
 ## 7. Eindes
 
 Er worden stilletjes twee dingen bijgehouden (de speler ziet deze getallen nooit):

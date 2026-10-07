@@ -11,6 +11,8 @@ uniform float distortion = 0.0;      // 0..1  golvend beeld
 uniform float static_amount = 0.0;   // 0..1  TV-ruis over het beeld
 uniform float desaturate = 0.0;      // 0..1  kleur wegtrekken
 uniform float darkness = 0.0;        // 0..1  extra donker (deken over je hoofd)
+uniform float chroma = 0.0;          // kleurranden (rood/blauw uit elkaar)
+uniform float proximity = 0.0;       // 0..1  het monster is dichtbij
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -31,14 +33,23 @@ void fragment() {
 		float band = step(0.985, hash(vec2(floor(uv.y * 40.0), floor(TIME * 12.0))));
 		uv.x += band * 0.03 * distortion;
 	}
-	vec3 c = texture(screen_tex, uv).rgb;
+	// het monster is dichtbij: beeld trilt en scheurt
+	if (proximity > 0.0) {
+		float tear = step(1.0 - proximity * 0.08, hash(vec2(floor(uv.y * 90.0), floor(TIME * 20.0))));
+		uv.x += tear * (hash(vec2(TIME, uv.y)) - 0.5) * 0.06 * proximity;
+	}
+	float ca = chroma + proximity * 0.006;
+	vec3 c = vec3(
+		texture(screen_tex, uv + vec2(ca, 0.0)).r,
+		texture(screen_tex, uv).g,
+		texture(screen_tex, uv - vec2(ca, 0.0)).b);
 
 	float g = dot(c, vec3(0.299, 0.587, 0.114));
 	c = mix(c, vec3(g), desaturate);
 
 	float n = hash(FRAGCOORD.xy + fract(TIME) * 100.0);
 	c += (n - 0.5) * grain;
-	c = mix(c, vec3(n), static_amount * 0.8);
+	c = mix(c, vec3(n), static_amount * 0.8 + proximity * proximity * 0.12);
 
 	vec2 d = SCREEN_UV - 0.5;
 	c *= 1.0 - dot(d, d) * vignette * 2.0;

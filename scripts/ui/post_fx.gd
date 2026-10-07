@@ -6,6 +6,8 @@ var _mat: ShaderMaterial
 var _base := {"darkness": 0.0, "vignette": 0.55}
 var _hiding := false
 var _listening := false
+var _proximity := 0.0
+var _fear := 0.0
 
 
 func _ready() -> void:
@@ -19,10 +21,29 @@ func _ready() -> void:
 	rect.material = _mat
 	add_child(rect)
 	# beginwaardes expliciet zetten (anders kan je er niet vanaf "tweenen")
-	for p in ["distortion", "static_amount", "desaturate", "darkness"]:
+	for p in ["distortion", "static_amount", "desaturate", "darkness", "chroma", "proximity"]:
 		set_param(p, 0.0)
 	set_param("vignette", 0.55)
 	set_param("grain", 0.035)
+
+
+## Monsters roepen dit elke frame aan als ze dichtbij zijn (0..1).
+func report_proximity(amount: float) -> void:
+	_proximity = maxf(_proximity, amount)
+
+
+## Hoe bang het kind is (0..1): kleurranden en samentrekkend beeld.
+func set_fear(amount: float) -> void:
+	_fear = amount
+
+
+func _process(delta: float) -> void:
+	set_param("proximity", _proximity)
+	_proximity = maxf(0.0, _proximity - delta * 2.0)
+	var pulse := (sin(Time.get_ticks_msec() * 0.008) * 0.5 + 0.5) * _fear
+	set_param("chroma", _fear * 0.002 + pulse * 0.0015)
+	if not _listening and not _hiding:
+		set_param("vignette", 0.55 + _fear * 0.6 + pulse * 0.15)
 
 
 func set_param(param: String, value: float) -> void:

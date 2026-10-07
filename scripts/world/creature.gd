@@ -16,6 +16,22 @@ const THIGH_PITCH := -12.0
 const KNEE_PITCH := 22.0
 const ARM_PITCH := -36.0
 
+enum Mode { IDLE, WALK, CRAWL, PEEK, LUNGE }
+
+## Rustpose (graden). Alle andere poses zijn hiervan afgeleid.
+const REST := {
+	"torso": Vector3(28, 0, 0), "neck": Vector3(25, 0, 0), "head": Vector3(-55, 0, 0),
+	"thigh_l": Vector3(-12, 0, -3), "thigh_r": Vector3(-12, 0, 3),
+	"knee_l": Vector3(22, 0, 0), "knee_r": Vector3(22, 0, 0),
+	"ankle_l": Vector3(-10, 0, 0), "ankle_r": Vector3(-10, 0, 0),
+	"arm_l": Vector3(-36, 0, -6), "arm_r": Vector3(-36, 0, 6),
+	"elbow_l": Vector3(-18, 0, 0), "elbow_r": Vector3(-18, 0, 0),
+}
+const STOP_MOTION_FPS := 12.0 ## schokkerig, net niet vloeiend = eng
+
+var mode := Mode.IDLE
+var peek_side := 1.0 ## naar welke kant het leunt bij gluren (1 of -1)
+var owl_neck := false ## hoofd kan 180 graden omdraaien
 var menace := 0.5 ## 0..1: hoe onrustig (vaker knakken, trekken)
 var still := false ## true = staat doodstil (bijv. als je ernaar kijkt)
 var walk_speed := 0.0 ## > 0 = loopt (wordt door Stalker gezet)
@@ -32,6 +48,7 @@ var _torso: Node3D
 var _neck: Node3D
 var _head: Node3D
 var _jaw: Node3D
+var _j := {} ## gewrichten: naam -> Node3D
 var _legs: Array = [] ## [heup-pivot, knie-pivot]
 var _arms: Array = [] ## [schouder-pivot, elleboog-pivot, [vingers]]
 var _t := 0.0
@@ -43,6 +60,7 @@ var _jaw_target := 0.08
 var _scream_time := 0.0
 var _breath: AudioStreamPlayer3D
 var _click_timer := 4.0
+var _step_acc := 0.0
 
 
 func _ready() -> void:
@@ -137,6 +155,10 @@ func _build() -> void:
 		for i in 3:
 			_cube(ankle, Vector3(0.012, 0.012, 0.09), Vector3(-0.022 + i * 0.022, -0.02, 0.22), _bone)
 		_legs.append([thigh, knee])
+		var tag := "_l" if side < 0 else "_r"
+		_j["thigh" + tag] = thigh
+		_j["knee" + tag] = knee
+		_j["ankle" + tag] = ankle
 
 	# --- romp, voorovergebogen, met ribben en een ruggengraat
 	_torso = _pivot(_hips, Vector3(0, 0.05, 0), Vector3(TORSO_PITCH, 0, 0))
@@ -164,11 +186,14 @@ func _build() -> void:
 		var fingers := []
 		for i in 4:
 			var f := _pivot(hand, Vector3(-0.027 + i * 0.018, -0.1, 0), Vector3(randf_range(-15, 15), 0, 0))
-			var length := 0.2 + (0.04 if i in [1, 2] else 0.0)
+			var length := 0.26 + (0.05 if i in [1, 2] else 0.0)
 			_limb(f, length, 0.009, 0.006, _skin)
 			_cube(f, Vector3(0.008, 0.045, 0.01), Vector3(0, -length - 0.015, 0.005), _bone, Vector3(25, 0, 0))
 			fingers.append(f)
 		_arms.append([sh, elbow, fingers])
+		var tag := "_l" if side < 0 else "_r"
+		_j["arm" + tag] = sh
+		_j["elbow" + tag] = elbow
 
 	# --- lange nek en een uitgerekt hoofd
 	_neck = _pivot(_torso, Vector3(0, 0.72, 0.03), Vector3(25, 0, 0))
@@ -185,6 +210,9 @@ func _build() -> void:
 		_cube(_head, Vector3(0.012, 0.017, 0.01), Vector3(-0.072 + i * 0.018, 0.066, 0.118), _teeth, Vector3(0, 0, randf_range(-12, 12)))
 	# zwart keelgat (zie je als de kaak openklapt)
 	_cube(_head, Vector3(0.15, 0.09, 0.06), Vector3(0, 0.02, 0.065), _black)
+	# ingescheurde mondhoeken
+	for side in [-1.0, 1.0]:
+		_cube(_head, Vector3(0.05, 0.008, 0.012), Vector3(side * 0.088, 0.078, 0.092), _black, Vector3(0, side * -25.0, side * 32.0))
 	_jaw = _pivot(_head, Vector3(0, 0.05, 0.02))
 	_cube(_jaw, Vector3(0.15, 0.035, 0.09), Vector3(0, -0.028, 0.045), _skin)
 	_cube(_jaw, Vector3(0.16, 0.02, 0.05), Vector3(0, -0.004, 0.07), _black)
@@ -202,6 +230,9 @@ func _build() -> void:
 		_cube(strand, Vector3(0.01, length, 0.008), Vector3(0, -length * 0.5, 0), _hair)
 
 	# geluid: reutelende ademhaling
+	_j["torso"] = _torso
+	_j["neck"] = _neck
+	_j["head"] = _head
 	_breath = AudioStreamPlayer3D.new()
 	_breath.stream = Sfx.stream("creature_breath")
 	_breath.bus = "SFX"
@@ -215,7 +246,7 @@ func _build() -> void:
 
 ## Mond wijd open, hoofd schudt. Met geluid.
 func scream(play_sound := true) -> void:
-	_jaw_target = 0.75
+	_jaw_target = 0.8
 	_scream_time = 1.0
 	if play_sound:
 		Sfx.play("scream", 0.0)
@@ -232,6 +263,85 @@ func head_position() -> Vector3:
 	return _head.global_position + _head.global_basis.y * 0.13
 
 
+## Meteen in de huidige pose springen (zonder stop-motion overgang).
+func snap_pose() -> void:
+	var pose := _pose(_t)
+	for joint in REST:
+		(_j[joint] as Node3D).rotation_degrees = pose[joint]
+	_hips.position.y = pose.hips_y
+	_head.rotation_degrees = pose.head
+
+
+## Hang ondersteboven aan het plafond (op hoogte `ceiling_y`), kruipend.
+func set_on_ceiling(on: bool, ceiling_y := 2.6) -> void:
+	mode = Mode.CRAWL if on else Mode.IDLE
+	rotation.z = PI if on else 0.0
+	position.y = ceiling_y if on else 0.0
+
+
+# ================================================================== poses
+
+func _pose(t: float) -> Dictionary:
+	var p := REST.duplicate()
+	p["hips_y"] = HIPS_Y
+	match mode:
+		Mode.IDLE:
+			p.torso = Vector3(28 + sin(t * 1.7) * 1.5, 0, 0)
+			p.arm_l += Vector3(sin(t * 0.9) * 3.0, 0, 0)
+			p.arm_r += Vector3(sin(t * 0.9 + 1.0) * 3.0, 0, 0)
+		Mode.WALK:
+			var s := sin(_phase)
+			p.torso = Vector3(32, 0, sin(_phase * 0.5) * 4.0)
+			p.thigh_l = Vector3(-12 + s * 28, 0, -3)
+			p.thigh_r = Vector3(-12 - s * 28, 0, 3)
+			p.knee_l = Vector3(22 + maxf(0.0, -s) * 40, 0, 0)
+			p.knee_r = Vector3(22 + maxf(0.0, s) * 40, 0, 0)
+			p.arm_l = Vector3(-36 - s * 17, 0, -8)
+			p.arm_r = Vector3(-36 + s * 17, 0, 8)
+			p.hips_y = HIPS_Y + absf(s) * 0.035
+		Mode.CRAWL:
+			# op handen en voeten, als een spin. Hoofd ondersteboven gedraaid.
+			var s := sin(_phase)
+			p.hips_y = 0.62
+			p.torso = Vector3(100, 0, s * 5.0)
+			p.neck = Vector3(-30, 0, 0)
+			p.head = Vector3(-70, 0, 180)
+			p.thigh_l = Vector3(40 + s * 15, 0, -28)
+			p.thigh_r = Vector3(40 - s * 15, 0, 28)
+			p.knee_l = Vector3(30, 0, 0)
+			p.knee_r = Vector3(30, 0, 0)
+			p.ankle_l = Vector3(-60, 0, 0)
+			p.ankle_r = Vector3(-60, 0, 0)
+			p.arm_l = Vector3(-140 - s * 20, 0, -22)
+			p.arm_r = Vector3(-140 + s * 20, 0, 22)
+			p.elbow_l = Vector3(45 + maxf(0.0, s) * 25, 0, 0)
+			p.elbow_r = Vector3(45 + maxf(0.0, -s) * 25, 0, 0)
+		Mode.PEEK:
+			# leunt zijwaarts om een hoek, hand om de deurpost
+			var k := peek_side
+			p.torso = Vector3(18, 0, 48 * k)
+			p.neck = Vector3(10, 0, 22 * k)
+			p.head = Vector3(-45, 0, -40 * k)
+			# armen recht naar beneden houden (achter de muur), één hand om de deurpost
+			var grip := "_r" if k < 0 else "_l"
+			var hang := "_l" if k < 0 else "_r"
+			p["arm" + hang] = Vector3(-18, 0, -48 * k)
+			p["elbow" + hang] = Vector3(-5, 0, 0)
+			p["arm" + grip] = Vector3(-75, 0, -30 * k)
+			p["elbow" + grip] = Vector3(-70, 0, 0)
+		Mode.LUNGE:
+			# grijpt naar je
+			p.hips_y = 1.0
+			p.torso = Vector3(58, 0, 0)
+			p.neck = Vector3(5, 0, 0)
+			p.head = Vector3(-55, 0, 0)
+			p.arm_l = Vector3(-150, 0, -12)
+			p.arm_r = Vector3(-150, 0, 12)
+			p.elbow_l = Vector3(-5, 0, 0)
+			p.elbow_r = Vector3(-5, 0, 0)
+	return p
+
+
 # ================================================================== animatie
 
 func _process(delta: float) -> void:
@@ -241,60 +351,69 @@ func _process(delta: float) -> void:
 		return
 	_t += delta
 	_update_audio(delta)
-
-	# kaak
+	_report_proximity()
+	if walk_speed > 0.05 and mode == Mode.IDLE:
+		mode = Mode.WALK
+	elif walk_speed <= 0.05 and mode == Mode.WALK:
+		mode = Mode.IDLE
+	if mode == Mode.WALK or mode == Mode.CRAWL:
+		_phase += delta * maxf(walk_speed, 0.3) * (6.5 if mode == Mode.CRAWL else 4.5)
 	if _scream_time > 0.0:
 		_scream_time -= delta
-		_head.rotation += Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.06
 		if _scream_time <= 0.0:
 			_jaw_target = 0.08
-	_jaw_open = lerpf(_jaw_open, _jaw_target, minf(1.0, 14.0 * delta))
+	# stop-motion: maar 12 keer per seconde een nieuwe pose
+	_step_acc += delta
+	if _step_acc < 1.0 / STOP_MOTION_FPS:
+		return
+	var dt := _step_acc
+	_step_acc = 0.0
+	_jaw_open = lerpf(_jaw_open, _jaw_target, minf(1.0, dt * 14.0))
 	_jaw.rotation.x = _jaw_open
 	if still:
 		return
 
-	# ademen
-	_torso.rotation.x = deg_to_rad(TORSO_PITCH) + sin(_t * 1.7) * 0.025
+	var pose := _pose(_t)
+	var blend := minf(1.0, dt * 9.0)
+	for joint in REST:
+		var node: Node3D = _j[joint]
+		node.rotation_degrees = node.rotation_degrees.lerp(pose[joint], blend)
+	_hips.position.y = lerpf(_hips.position.y, pose.hips_y, blend)
 
 	# hoofd: schokkerig knakken + naar jou kijken
-	_jerk -= delta
+	_jerk -= dt
 	if _jerk <= 0.0:
 		_jerk = randf_range(0.5, 3.0) * (1.5 - menace)
 		_head_off = Vector3(randf_range(-0.3, 0.35), randf_range(-0.45, 0.45), randf_range(-0.75, 0.75))
 	var look := Vector2.ZERO
-	if track_player and Game.player:
+	if track_player and Game.player and mode != Mode.PEEK:
 		var cam: Vector3 = Game.player.get_camera().global_position
 		var local := _neck.global_transform.affine_inverse() * cam - Vector3(0, 0.24, 0)
-		look.y = clampf(atan2(local.x, local.z), -1.3, 1.3)
+		var limit := 2.9 if owl_neck else 1.3
+		look.y = clampf(atan2(local.x, local.z), -limit, limit)
 		look.x = clampf(-atan2(local.y, Vector2(local.x, local.z).length()), -0.5, 0.5)
 	var w := 0.35 if track_player else 1.0
-	var target := Vector3(deg_to_rad(HEAD_PITCH) + look.x + _head_off.x * w, look.y + _head_off.y * w, _head_off.z)
-	_head.rotation = _head.rotation.lerp(target, minf(1.0, 20.0 * delta))
+	var base: Vector3 = pose.head * (PI / 180.0)
+	_head.rotation = Vector3(base.x + look.x + _head_off.x * w, base.y + look.y + _head_off.y * w, base.z + _head_off.z)
+	if _scream_time > 0.0:
+		_head.rotation += Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 0.12
 
-	# lopen (stijf en onnatuurlijk) of stilstaan
-	if walk_speed > 0.05:
-		_phase += delta * walk_speed * 4.5
-		var s := sin(_phase)
-		for i in 2:
-			var sign_i := 1.0 if i == 0 else -1.0
-			_legs[i][0].rotation.x = deg_to_rad(THIGH_PITCH) + s * 0.5 * sign_i
-			_legs[i][1].rotation.x = deg_to_rad(KNEE_PITCH) + maxf(0.0, -s * sign_i) * 0.7
-			_arms[i][0].rotation.x = deg_to_rad(ARM_PITCH) - s * 0.3 * sign_i
-		_hips.position.y = HIPS_Y + absf(s) * 0.035
-		_hips.rotation.z = sin(_phase * 0.5) * 0.07 + randf_range(-0.015, 0.015)
-	else:
-		for i in 2:
-			_legs[i][0].rotation.x = lerpf(_legs[i][0].rotation.x, deg_to_rad(THIGH_PITCH), 5.0 * delta)
-			_legs[i][1].rotation.x = lerpf(_legs[i][1].rotation.x, deg_to_rad(KNEE_PITCH), 5.0 * delta)
-			_arms[i][0].rotation.x = lerpf(_arms[i][0].rotation.x, deg_to_rad(ARM_PITCH) + sin(_t * 0.9 + i) * 0.04, 5.0 * delta)
-		_hips.position.y = lerpf(_hips.position.y, HIPS_Y, 5.0 * delta)
-		_hips.rotation.z = lerpf(_hips.rotation.z, 0.0, 5.0 * delta)
+	# vingers trekken (en krullen om de deurpost bij gluren)
+	for arm in _arms:
+		for f in arm[2]:
+			if mode == Mode.PEEK:
+				f.rotation.x = lerpf(f.rotation.x, 0.9, blend)
+			elif randf() < dt * (1.0 + menace * 3.0) * 0.5:
+				f.rotation.x = randf_range(-0.6, 0.5)
 
-	# vingers trekken
-	if randf() < delta * (1.0 + menace * 3.0):
-		var fingers: Array = _arms[randi() % 2][2]
-		var f: Node3D = fingers[randi() % fingers.size()]
-		f.rotation.x = randf_range(-0.6, 0.5)
+
+## Hoe dichter het monster bij jou is, hoe meer ruis en kleurranden in beeld.
+func _report_proximity() -> void:
+	if Game.player == null or Game.post == null or Game.phase != Game.Phase.NIGHT:
+		return
+	var d := global_position.distance_to(Game.player.global_position)
+	if d < 6.0:
+		Game.post.report_proximity(1.0 - d / 6.0)
 
 
 func _update_audio(delta: float) -> void:

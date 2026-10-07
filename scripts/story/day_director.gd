@@ -229,10 +229,10 @@ func _school_day_3(murmur: AudioStreamPlayer) -> void:
 	while waited < 8.0 and not player.is_looking_at(school.figure.global_position + Vector3(0, 1.3, 0), 18.0):
 		await get_tree().process_frame
 		waited += get_process_delta_time()
-	Sfx.play("stinger", -2.0)
+	school.figure.scream()
 	Game.post.jolt(1.0)
 	player.fear = 1.0
-	await Game.wait(0.25)
+	await Game.wait(0.45)
 	await hud.fade_out(0.1)
 	# wakker!
 	school.reset_figure()

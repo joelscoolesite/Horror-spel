@@ -40,7 +40,7 @@ var package: Node3D ## het pakketje van Amazin (nacht 3)
 var extension: Node3D ## de gang die langer is dan hij hoort (nacht 4)
 var copy_door: Door
 var sleeper_head: Node3D ## iemand in jouw bed... (nacht 4)
-var shadow: Node3D ## een zwarte gestalte die de regie overal kan neerzetten
+var shadow: Creature ## het monster, dat de regie overal kan neerzetten
 var strange_chair: Node3D ## een stoel die niet van jou is (dag 5+)
 var long_hall := false
 var stalker: Stalker ## het wezen (nacht 6)
@@ -499,8 +499,9 @@ func _build_bedroom() -> void:
 	strange_chair = Props.chair(self, Vector3(3.7, 0, 3.2), -135.0, Build.mat("wood_dark"))
 	strange_chair.visible = false
 	# de schaduw-gestalte (hergebruikt in nacht 4 en 5)
-	shadow = Props.person(self, "Shadow", Vector3.ZERO, 0.0, Color(0.01, 0.01, 0.01), false, true, Color.BLACK, Color(0.01, 0.01, 0.01))
-	shadow.scale = Vector3(1.0, 1.08, 1.0)
+	shadow = Creature.new()
+	shadow.name = "Shadow"
+	add_child(shadow)
 	shadow.visible = false
 	_marker("bed_head", Vector3(0.65, 0.62, 0.42), Vector3(0.65, 0.9, 3.0))
 	_marker("bed_side", Vector3(1.6, 0, 1.4), Vector3(3.5, 0, 4.0))

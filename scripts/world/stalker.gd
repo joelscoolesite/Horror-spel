@@ -30,7 +30,7 @@ const EDGES := [
 var active := false
 var speed := 0.9
 var frozen := false ## door de regie stilgezet (bijv. tijdens het krabben)
-var body: Node3D
+var body: Creature
 
 var _path: Array = [] ## punten (Vector2) om naar toe te lopen
 var _repath := 0.0
@@ -41,8 +41,10 @@ var _goal_node := "" ## als dit gezet is, loopt het hierheen i.p.v. naar de spel
 
 
 func _ready() -> void:
-	body = Props.person(self, "Body", Vector3.ZERO, 0.0, Color(0.01, 0.01, 0.01), false, true, Color.BLACK, Color(0.01, 0.01, 0.01))
-	body.scale = Vector3(1.0, 1.1, 1.0)
+	body = Creature.new()
+	body.name = "Body"
+	body.menace = 0.8
+	add_child(body)
 	visible = false
 	for n in NODES:
 		_neighbors[n] = []
@@ -96,13 +98,16 @@ func _process(delta: float) -> void:
 		return
 	var player: Player = Game.player
 	var seen := is_seen()
+	body.still = seen # als je kijkt: doodstil
 	if seen:
+		body.walk_speed = 0.0
 		_stare += delta if player.flashlight_on else delta * 0.3
 		if _stare > 2.5:
 			_banish()
 		return
 	_stare = maxf(0.0, _stare - delta * 0.5)
 	if frozen:
+		body.walk_speed = 0.0
 		return
 	# pad naar de speler (of naar een opgegeven punt)
 	_repath -= delta
@@ -125,7 +130,9 @@ func _process(delta: float) -> void:
 
 func _move(delta: float) -> void:
 	if _path.is_empty():
+		body.walk_speed = 0.0
 		return
+	body.walk_speed = speed
 	var target: Vector2 = _path[0]
 	var pos := Vector2(global_position.x, global_position.z)
 	var to := target - pos
@@ -136,7 +143,6 @@ func _move(delta: float) -> void:
 	pos += to.normalized() * step
 	global_position = Vector3(pos.x, 0, pos.y)
 	global_rotation.y = atan2(to.x, to.y)
-	body.position.y = absf(sin(Time.get_ticks_msec() * 0.006)) * 0.02
 	# eigen voetstappen, in een eigen tempo
 	_step += step
 	if _step > 0.55:

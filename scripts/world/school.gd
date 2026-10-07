@@ -131,8 +131,11 @@ func _build_class() -> void:
 				starer = kid
 
 	# de gestalte: helemaal zwart, geen gezicht
-	figure = Props.person(self, "Figure", Vector3(0.45, 0, 2.0), 31.0, Color(0.01, 0.01, 0.01), false, true, Color.BLACK, Color(0.01, 0.01, 0.01))
-	figure.scale = Vector3(1.0, 1.12, 1.0)
+	figure = Creature.new()
+	figure.name = "Figure"
+	figure.position = Vector3(0.45, 0, 2.0)
+	figure.rotation_degrees.y = 31.0
+	add_child(figure)
 	figure.visible = false
 
 

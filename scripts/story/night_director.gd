@@ -578,12 +578,7 @@ func _doorway_figure() -> void:
 		await Game.wait(2.0)
 	else:
 		# je keek... het staat vlak voor je
-		var cam := player.get_camera()
-		var front := cam.global_position - cam.global_basis.z * 0.6
-		ap.show_shadow(Vector3(front.x, cam.global_position.y - 1.9, front.z), cam.global_position)
-		Sfx.play("stinger", 2.0)
-		Game.post.jolt(1.5)
-		await Game.wait(0.5)
+		await _jumpscare(ap.shadow, ap.shadow, 0.45)
 	ap.shadow.visible = false
 	backlight.queue_free()
 	if player.hiding:
@@ -654,9 +649,10 @@ func _night_5_events(token: int) -> void:
 	ap.show_shadow(pos, player.global_position)
 	Sfx.play_at("breath", pos + Vector3(0, 1.6, 0), 0.0)
 	await _wait_until(func(): return player.is_looking_at(ap.shadow.global_position + Vector3(0, 1.3, 0), 25.0), 6.0)
-	ap.shadow.visible = false
-	Sfx.play("stinger", -2.0)
+	ap.shadow.scream()
 	Game.post.jolt(1.0)
+	await Game.wait(0.45)
+	ap.shadow.visible = false
 	player.fear = 1.0
 	ap.tv.set_mode(TV.Mode.OFF)
 	ap.tv.set_message("")
@@ -672,8 +668,12 @@ func _night_5_events(token: int) -> void:
 	var closet: Door = ap.closets[2]
 	closet.reset_closed()
 	Sfx.play_at("door_close", closet.center(), -4.0, 1.3)
-	var thing := Props.person(closet.get_parent(), "Thing", Vector3(0, 0, -0.32), 0.0, Color(0.01, 0.01, 0.01), false, true, Color.BLACK, Color(0.01, 0.01, 0.01))
-	thing.scale = Vector3(0.85, 0.85, 0.85)
+	var thing := Creature.new()
+	thing.name = "Thing"
+	thing.position = Vector3(0, 0, -0.32)
+	thing.scale = Vector3(0.82, 0.82, 0.82)
+	thing.menace = 1.0
+	closet.get_parent().add_child(thing)
 	_start_scratch(closet.center())
 	_quiet_closets = true
 	hud.say("Scratching. From inside the closet in Mom's room.", 3.5)
@@ -684,13 +684,8 @@ func _night_5_events(token: int) -> void:
 		_quiet_closets = false
 		return
 	# het springt eruit
-	Sfx.play("stinger", 2.0)
-	Game.post.jolt(1.5)
 	player.fear = 1.0
-	var cam := player.get_camera()
-	var t := create_tween()
-	t.tween_property(thing, "global_position", cam.global_position - cam.global_basis.z * 0.3 - Vector3(0, 1.6, 0), 0.3)
-	await Game.wait(0.3)
+	await _jumpscare(thing, thing, 0.35, true)
 	player.locked = true
 	await hud.fade_out(0.05)
 	thing.queue_free()
@@ -854,17 +849,36 @@ func _on_closet_opened_n6(closet: Door) -> void:
 	_outcome = "check"
 
 
+## Het monster vlak voor je gezicht, mond open, schreeuw, beeld schudt.
+## `lunge` = het springt naar je toe in plaats van er ineens te staan.
+func _jumpscare(root: Node3D, creature: Creature, dist := 0.4, lunge := false) -> void:
+	var cam := player.get_camera()
+	var fwd := -cam.global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	root.visible = true
+	creature.still = false
+	root.global_rotation.y = atan2(-fwd.x, -fwd.z) # gezicht naar jou toe
+	var target := root.global_position + (cam.global_position + fwd * dist) - creature.head_position()
+	creature.scream()
+	Game.post.jolt(1.6)
+	player.gripping = true # beeld schudt en zoomt in
+	if lunge:
+		var t := create_tween()
+		t.tween_property(root, "global_position", target, 0.22).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+		await t.finished
+		await Game.wait(0.45)
+	else:
+		root.global_position = target
+		await Game.wait(0.75)
+	player.gripping = false
+
+
 func _caught_sequence() -> void:
 	player.locked = true
 	var stalker: Stalker = ap.stalker
-	var cam := player.get_camera()
-	var front := cam.global_position - cam.global_basis.z * 0.55
-	stalker.visible = true
-	stalker.global_position = Vector3(front.x, cam.global_position.y - 1.95, front.z)
-	stalker.global_rotation.y = atan2(cam.global_position.x - front.x, cam.global_position.z - front.z)
-	Sfx.play("stinger", 3.0)
-	Game.post.jolt(1.6)
-	await Game.wait(0.7)
+	stalker.active = false
+	await _jumpscare(stalker, stalker.body, 0.38)
 	await hud.fade_out(0.05)
 	stalker.despawn()
 	if player.hiding:

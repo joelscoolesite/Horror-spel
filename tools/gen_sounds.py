@@ -293,6 +293,61 @@ def whisper():
     save("whisper", out, 0.7)
 
 
+def creature_breath():
+    """Reutelende, natte ademhaling van het monster (loop)."""
+    sec = 3.2
+    n = int(sec * SR)
+    tt = t(sec)
+    # inademen (kort, hoog) en uitademen (lang, laag en reutelend)
+    inhale = np.clip(np.sin(2 * np.pi * tt / sec), 0, 1) ** 2
+    exhale = np.clip(-np.sin(2 * np.pi * tt / sec), 0, 1) ** 1.5
+    air_in = bandpass(white(sec), 900, 3500) * inhale * 0.5
+    air_out = bandpass(white(sec), 200, 1200) * exhale
+    # reutel: snelle tikjes tijdens het uitademen
+    rattle = np.zeros(n)
+    pos = 0
+    while pos < n:
+        pos += int(SR / rng.uniform(28, 45))
+        if pos < n:
+            rattle[pos] = rng.uniform(0.4, 1.0)
+    rattle = resonator(rattle, 260, 6) * 3 + resonator(rattle, 520, 8)
+    growl = np.sin(2 * np.pi * 55 * tt + np.sin(2 * np.pi * 7 * tt)) * 0.25
+    x = air_in + (air_out + rattle * 0.8 + growl) * exhale
+    save("creature_breath", crossfade_loop(x, 0.1), 0.75)
+
+
+def clicks():
+    """Keelgeklik (zoals in The Grudge): een rammelende reeks tikken."""
+    sec = 1.6
+    n = int(sec * SR)
+    x = np.zeros(n)
+    pos = 0
+    k = 0
+    while pos < n:
+        rate = 18 + 10 * np.sin(k * 0.3)
+        pos += int(SR / rate)
+        if pos < n:
+            x[pos] = rng.uniform(0.6, 1.0)
+        k += 1
+    y = resonator(x, 420, 10) * 4 + resonator(x, 900, 14) * 2 + resonator(x, 180, 5)
+    shape = np.minimum(1, np.linspace(0, 6, n)) * np.minimum(1, np.linspace(5, 0, n))
+    save("clicks", y * shape, 0.85)
+
+
+def scream():
+    """Schreeuw voor jumpscares: schel, vals en vervormd."""
+    sec = 1.5
+    tt = t(sec)
+    sweep = 380 + 520 * np.minimum(1, tt * 4) + 40 * np.sin(2 * np.pi * 11 * tt)
+    phase = 2 * np.pi * np.cumsum(sweep) / SR
+    voice = sum(np.sign(np.sin(phase * m + d)) * a for m, d, a in [(1, 0, 1), (1.013, 1, 0.8), (1.5, 2, 0.4), (2.02, 3, 0.3)])
+    voice += bandpass(white(sec), 1500, 7000) * 1.5
+    roar = np.sin(2 * np.pi * 70 * tt) * 1.2 + lowpass(white(sec), 300) * 2
+    x = np.tanh((voice + roar) * 1.5)
+    x *= np.minimum(1, tt * 40) * np.exp(-np.maximum(0, tt - 0.8) * 4)
+    save("scream", x, 0.98)
+
+
 def ui_click():
     n = int(0.05 * SR)
     save("ui_click", np.sin(2 * np.pi * 1200 * t(0.05)) * env(n, 0.001, 80), 0.4)
@@ -328,4 +383,7 @@ if __name__ == "__main__":
     ui_click()
     pickup()
     whisper()
+    creature_breath()
+    clicks()
+    scream()
     print("Klaar!")

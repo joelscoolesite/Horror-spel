@@ -196,6 +196,44 @@ func run() -> void:
 	player._pitch = -0.1
 	await _settle()
 	_shot("school_noeyes")
+	# het monster
+	# overdag, goed verlicht: zo ziet het eruit
+	ap.set_mood("morning")
+	ap.set_all_lights(true)
+	ap.show_shadow(Vector3(5.0, 0, 7.6), Vector3(2.5, 0, 9.0))
+	_look(player, Vector3(2.5, 0, 9.4), Vector3(5.0, 1.3, 7.6))
+	await _settle()
+	_shot("c_full_day")
+	ap.shadow.track_player = true
+	player.noclip = true
+	var hp := ap.shadow.head_position()
+	var face_dir := Vector3(-2.5, 0, 1.4).normalized()
+	_look(player, Vector3(hp.x, 0, hp.z) + face_dir * 0.9, hp)
+	player.global_position.y = hp.y - Player.EYE_HEIGHT
+	var d := hp - (player.global_position + Vector3(0, Player.EYE_HEIGHT, 0))
+	player._pitch = atan2(d.y, Vector2(d.x, d.z).length())
+	await _settle()
+	_shot("c_face_day")
+	player.noclip = false
+	# 's nachts met zaklamp in de gang
+	ap.set_all_lights(false)
+	ap.set_mood("night")
+	Game.post.set_night(true)
+	player.set_flashlight(true)
+	ap.show_shadow(Vector3(7.0, 0, 4.75), Vector3(3.0, 0, 4.75))
+	_look(player, Vector3(3.0, 0, 4.75), Vector3(7.0, 1.5, 4.75))
+	await _settle()
+	_shot("c_hall_night")
+	# zaklamp uit: alleen de ogen...
+	player.set_flashlight(false)
+	await _settle()
+	_shot("c_hall_dark")
+	# jumpscare
+	player.set_flashlight(true)
+	var nd = get_parent().get_node("NightDirector")
+	nd._jumpscare(ap.shadow, ap.shadow, 0.45)
+	await _settle()
+	_shot("c_jumpscare")
 	print("TOUR KLAAR")
 	get_tree().quit()
 
